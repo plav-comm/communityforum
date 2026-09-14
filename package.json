@@ -1,0 +1,36 @@
+{
+  "name": "community-span",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Community-Span \u2014 real-time aggregation and civic topic tagging of public municipal YouTube meeting streams.",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed-channels.js",
+    "add-channel": "node scripts/add-channel.js",
+    "subscribe": "node scripts/subscribe.js",
+    "daily": "node scripts/daily.js",
+    "backfill": "node scripts/backfill.js",
+    "test": "node test/run.js",
+    "discover": "node scripts/discover-agenda-sources.js",
+    "agendas": "node scripts/sync-agendas.js",
+    "restore-demo": "node scripts/restore-demo.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "fast-xml-parser": "^4.5.1",
+    "pdf-parse": "^1.1.1",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.3.4",
+    "@electric-sql/pglite-socket": "^0.0.9"
+  }
+}

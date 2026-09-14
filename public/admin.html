@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Add a town — Community-Span</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap masthead__inner">
+    <a class="brand" href="index.html" aria-label="Community-Span home">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+        <rect x="1.25" y="1.25" width="31.5" height="31.5" rx="6" stroke="currentColor" stroke-width="2.5"/>
+        <path d="M8 24.5h18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M11.5 24.5v-5M17 24.5v-5M22.5 24.5v-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M11 15.5a8 8 0 0 1 12 0" stroke="#C8102E" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M14.4 12.2a4.3 4.3 0 0 1 5.2 0" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      <span>
+        <span class="brand__name">COMMUNITY<em>-</em>SPAN</span>
+        <span class="brand__tag">Newsroom Console</span>
+      </span>
+    </a>
+    <nav class="nav" id="mainnav" aria-label="Primary">
+      <a href="index.html">Watch</a>
+      <a href="admin.html" aria-current="page">Add a town</a>
+    </nav>
+    <div class="masthead__tools">
+      <span class="srcbadge" id="authBadge">Not connected</span>
+      <button class="iconbtn" type="button" id="themeBtn" aria-label="Toggle dark mode">
+        <svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/>
+        </svg>
+        <svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M20.5 14.6A8.6 8.6 0 1 1 9.4 3.5a7 7 0 0 0 11.1 11.1Z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap console">
+
+  <!-- ============ SIGN IN ============ -->
+  <section class="panel" id="authPanel">
+    <div class="panel__head">
+      <div>
+        <div class="section__eyebrow">Step 0</div>
+        <h2 class="panel__title">Connect to your server</h2>
+        <p class="panel__sub">Paste your <code>ADMIN_TOKEN</code>. It is held in memory for this tab only — never saved, never sent anywhere but your own server.</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field field--grow">
+        <label class="field__label" for="token">Admin token</label>
+        <input class="input" type="password" id="token" placeholder="the ADMIN_TOKEN from your .env" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label class="field__label" for="apiBase">Server (leave blank if this page is served by it)</label>
+        <input class="input" type="text" id="apiBase" placeholder="https://your-service.onrender.com" autocomplete="off" />
+      </div>
+      <div class="field field--action">
+        <button class="btn" type="button" id="connectBtn">Connect</button>
+      </div>
+    </div>
+    <p class="note" id="authNote"></p>
+  </section>
+
+  <!-- ============ ADD A TOWN ============ -->
+  <section class="panel" id="addPanel" hidden>
+    <div class="panel__head">
+      <div>
+        <div class="section__eyebrow">Add a town</div>
+        <h2 class="panel__title">One town at a time</h2>
+        <p class="panel__sub">Paste the town's YouTube channel. Everything you can confirm by eye stays your call; the agenda source is suggested where we have one.</p>
+      </div>
+    </div>
+
+    <!-- 1. the channel -->
+    <div class="step">
+      <div class="step__n">1</div>
+      <div class="step__body">
+        <div class="row">
+          <div class="field field--grow">
+            <label class="field__label" for="chanInput">YouTube channel, @handle, or a link to any meeting video</label>
+            <input class="input" type="text" id="chanInput" placeholder="https://www.youtube.com/@CityofAustin" autocomplete="off" />
+          </div>
+          <div class="field field--action">
+            <button class="btn btn--outline" type="button" id="resolveBtn">Look it up</button>
+          </div>
+        </div>
+        <div id="resolveResult"></div>
+      </div>
+    </div>
+
+    <!-- 2. where it is -->
+    <div class="step" id="detailsStep" hidden>
+      <div class="step__n">2</div>
+      <div class="step__body">
+        <p class="step__hint">Only you can say which community this channel serves, so these stay manual.</p>
+        <div class="grid4">
+          <div class="field">
+            <label class="field__label" for="fMuni">City / town *</label>
+            <input class="input" type="text" id="fMuni" placeholder="Austin" />
+          </div>
+          <div class="field">
+            <label class="field__label" for="fCounty">County</label>
+            <input class="input" type="text" id="fCounty" placeholder="Travis County" />
+          </div>
+          <div class="field">
+            <label class="field__label" for="fStateCode">State *</label>
+            <span class="select"><select id="fStateCode"></select></span>
+          </div>
+          <div class="field">
+            <label class="field__label" for="fPop">Population</label>
+            <input class="input" type="number" id="fPop" placeholder="975000" min="0" />
+          </div>
+          <div class="field">
+            <label class="field__label" for="fBody">Governing body *</label>
+            <span class="select">
+              <select id="fBody">
+                <optgroup label="General purpose (mixed agenda)">
+                  <option>City Council</option><option>Town Council</option>
+                  <option>Select Board</option><option>County Commission</option>
+                  <option>Board of Supervisors</option><option>Board of Aldermen</option>
+                  <option>City Commission</option><option>Village Board</option>
+                </optgroup>
+                <optgroup label="Schools">
+                  <option>School Board</option><option>Board of Education</option>
+                  <option>School Committee</option>
+                </optgroup>
+                <optgroup label="Land use">
+                  <option>Planning &amp; Zoning</option><option>Planning Commission</option>
+                  <option>Planning Board</option><option>Zoning Board of Appeals</option>
+                  <option>Board of Adjustment</option>
+                </optgroup>
+                <optgroup label="Single purpose">
+                  <option>Finance Committee</option><option>Police Commission</option>
+                  <option>Fire District</option><option>Conservation Commission</option>
+                  <option>Water Board</option><option>Parks Board</option>
+                  <option>Library Board</option><option>Board of Health</option>
+                  <option>Ethics Commission</option>
+                </optgroup>
+              </select>
+            </span>
+            <p class="field__help" id="bodyHelp"></p>
+          </div>
+          <div class="field">
+            <label class="field__label" for="fTz">Time zone</label>
+            <span class="select">
+              <select id="fTz">
+                <option value="America/New_York">Eastern</option>
+                <option value="America/Chicago">Central</option>
+                <option value="America/Denver">Mountain</option>
+                <option value="America/Phoenix">Arizona (no DST)</option>
+                <option value="America/Los_Angeles">Pacific</option>
+                <option value="America/Anchorage">Alaska</option>
+                <option value="Pacific/Honolulu">Hawaii</option>
+              </select>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. optional agenda source -->
+    <div class="step" id="agendaStep" hidden>
+      <div class="step__n">3</div>
+      <div class="step__body">
+        <p class="step__hint">
+          Optional. An agenda source lets us tag meetings by what was actually on the agenda
+          instead of guessing from the title. Most towns will have none — that is fine, and you
+          can attach one later without redoing anything.
+        </p>
+        <div class="row">
+          <div class="field field--grow">
+            <label class="field__label" for="agendaSearch">Search the agenda catalogue</label>
+            <input class="input" type="text" id="agendaSearch" placeholder="type a town name…" autocomplete="off" />
+          </div>
+          <div class="field field--action">
+            <button class="btn btn--outline btn--sm" type="button" id="agendaClear">No agenda source</button>
+          </div>
+        </div>
+        <div id="agendaSuggest"></div>
+        <div id="agendaChosen"></div>
+      </div>
+    </div>
+
+    <div class="panel__foot" id="saveRow" hidden>
+      <label class="check"><input type="checkbox" id="fSubscribe" checked /> Turn on real-time push notifications</label>
+      <label class="check"><input type="checkbox" id="fBackfill" checked /> Pull the last 15 meetings now</label>
+      <button class="btn" type="button" id="saveBtn">Add this town</button>
+    </div>
+    <div id="saveResult"></div>
+  </section>
+
+  <!-- ============ BULK ============ -->
+  <section class="panel" id="bulkPanel" hidden>
+    <div class="panel__head">
+      <div>
+        <div class="section__eyebrow">Add many</div>
+        <h2 class="panel__title">Paste from a spreadsheet</h2>
+        <p class="panel__sub">One town per line. Copy straight out of Google Sheets or Excel — tabs and commas both work. Every row is reported back separately, so one bad line never sinks the batch.</p>
+      </div>
+    </div>
+    <p class="mono-head">channel, municipality, county, stateCode, stateName, govBody, population</p>
+    <textarea class="input input--area" id="bulkCsv" rows="7" placeholder="https://www.youtube.com/@CityofAustin, Austin, Travis County, TX, Texas, City Council, 975000
+https://www.youtube.com/@DenverCityCouncil, Denver, Denver County, CO, Colorado, City Council, 715000"></textarea>
+    <div class="panel__foot">
+      <button class="btn btn--outline" type="button" id="bulkBtn">Add all rows</button>
+    </div>
+    <div id="bulkResult"></div>
+  </section>
+
+  <!-- ============ MONITORED ============ -->
+  <section class="panel" id="listPanel" hidden>
+    <div class="panel__head">
+      <div>
+        <div class="section__eyebrow">Currently monitored</div>
+        <h2 class="panel__title">Your towns</h2>
+        <p class="panel__sub" id="listSummary"></p>
+      </div>
+      <div class="panel__actions">
+        <button class="btn btn--outline btn--sm" type="button" id="syncAgendasBtn">Sync agendas</button>
+        <button class="btn btn--outline btn--sm" type="button" id="refreshBtn">Refresh</button>
+      </div>
+    </div>
+    <div class="tablewrap">
+      <table class="table" id="chanTable">
+        <thead>
+          <tr>
+            <th>Community</th><th>Body</th><th>Push</th><th>Agenda</th>
+            <th class="num">Videos</th><th>Latest</th><th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="listResult"></div>
+  </section>
+</main>
+
+<script src="admin.js"></script>
+</body>
+</html>

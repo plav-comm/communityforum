@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Community-Span — Every Town Hall. Unfiltered.</title>
+<meta name="description" content="Community-Span aggregates local town, city, county and school board meeting feeds from across the country — unedited, without commentary or analysis." />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<a class="sr-only" href="#library">Skip to the video library</a>
+
+<!-- ============ UTILITY BAR ============ -->
+<div class="utility">
+  <div class="wrap utility__inner">
+    <span class="utility__mission">Local government, unedited &amp; uninterrupted</span>
+    <span class="utility__spacer"></span>
+    <span class="srcbadge" id="sourceBadge" title="Data source">Connecting…</span>
+    <span class="livepill" hidden><span class="livepill__dot"></span> <span id="liveCount">0</span> Live Now</span>
+    <a class="utility__link" href="#mission">Our Mission</a>
+    <a class="utility__link" href="#advertise">Advertise</a>
+  </div>
+</div>
+
+<!-- ============ MASTHEAD ============ -->
+<header class="masthead">
+  <div class="wrap masthead__inner">
+    <a class="brand" href="#top" aria-label="Community-Span home">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+        <rect x="1.25" y="1.25" width="31.5" height="31.5" rx="6" stroke="currentColor" stroke-width="2.5"/>
+        <path d="M8 24.5h18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M11.5 24.5v-5M17 24.5v-5M22.5 24.5v-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M11 15.5a8 8 0 0 1 12 0" stroke="#C8102E" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M14.4 12.2a4.3 4.3 0 0 1 5.2 0" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      <span>
+        <span class="brand__name">COMMUNITY<em>-</em>SPAN</span>
+        <span class="brand__tag">Local Government Network</span>
+      </span>
+    </a>
+
+    <nav class="nav" id="mainnav" aria-label="Primary">
+      <a href="#library" aria-current="page">Watch</a>
+      <a href="#newweek">What's New</a>
+      <a href="#upcoming">Schedule</a>
+      <a href="#topics">Topics</a>
+      <a href="#star">Community Stars</a>
+      <a href="#mission">About</a>
+    </nav>
+
+    <div class="masthead__tools">
+      <label class="searchbox">
+        <span class="sr-only">Search meetings by town, county, body or topic</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+        </svg>
+        <input type="search" id="search" placeholder="Search your town…" autocomplete="off" />
+      </label>
+      <button class="btn btn--gold btn--sm premium-cta" type="button" id="premiumBtn">SPAN+ Upgrade</button>
+      <button class="iconbtn" type="button" id="themeBtn" aria-label="Toggle dark mode">
+        <svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/>
+        </svg>
+        <svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M20.5 14.6A8.6 8.6 0 1 1 9.4 3.5a7 7 0 0 0 11.1 11.1Z"/>
+        </svg>
+      </button>
+      <button class="iconbtn navtoggle" type="button" id="navToggle" aria-label="Open menu" aria-expanded="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============ LEADERBOARD AD ============ -->
+  <section class="section section--tight" aria-label="Advertisement">
+    <div class="wrap">
+      <div class="adslot">
+        <div class="adslot__label">Advertisement</div>
+        <div class="ad-leader">
+          <span class="ad-leader__badge">Valley Ford &amp; Lincoln</span>
+          <div class="ad-leader__copy">
+            <div class="ad-leader__head">Zero down on every 2027 model. Right here in your town.</div>
+            <div class="ad-leader__sub">Family-owned for 38 years · Proud sponsor of Community-Span local council coverage</div>
+          </div>
+          <button class="btn ad-leader__cta" type="button">See Local Inventory</button>
+          <span class="ad-leader__dims">970 × 90 &nbsp;LEADERBOARD</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HERO PLAYER + RAIL ============ -->
+  <section class="hero" aria-label="Featured meeting">
+    <div class="wrap hero__grid">
+      <div class="player">
+        <div class="player__frame">
+          <div class="player__loading" id="playerLoading">Loading video…</div>
+          <iframe id="playerFrame" title="Featured town hall meeting video"
+            src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+        <div class="player__meta">
+          <div class="player__badges" id="playerBadges"></div>
+          <h1 class="player__title" id="playerTitle">Loading…</h1>
+          <div class="player__where" id="playerWhere"></div>
+          <p class="player__blurb" id="playerBlurb"></p>
+          <div class="player__facts" id="playerFacts"></div>
+        </div>
+      </div>
+
+      <aside class="rail" id="upcoming" aria-label="Featured and upcoming">
+        <div class="rail__tabs" role="tablist">
+          <button class="rail__tab" id="tab-featured" role="tab" aria-selected="true" aria-controls="panel-featured" type="button">Featured</button>
+          <button class="rail__tab" id="tab-upcoming" role="tab" aria-selected="false" aria-controls="panel-upcoming" type="button">Upcoming</button>
+        </div>
+        <div class="rail__body" id="panel-featured" role="tabpanel" aria-labelledby="tab-featured"></div>
+        <div class="rail__body" id="panel-upcoming" role="tabpanel" aria-labelledby="tab-upcoming" hidden></div>
+        <p class="rail__note" id="railNote">Featured selections rotate as new proceedings are ingested from municipal feeds.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ FILTER BAR ============ -->
+  <div class="filterbar" id="library">
+    <div class="wrap filterbar__inner">
+      <div class="filterbar__row">
+        <div class="field">
+          <label class="field__label" for="fState">State</label>
+          <span class="select"><select id="fState"></select></span>
+        </div>
+        <div class="field">
+          <label class="field__label" for="fCounty">County</label>
+          <span class="select"><select id="fCounty"></select></span>
+        </div>
+        <div class="field">
+          <label class="field__label" for="fCity">City / Town</label>
+          <span class="select"><select id="fCity"></select></span>
+        </div>
+        <div class="field">
+          <label class="field__label" for="fTier">Community size</label>
+          <span class="select"><select id="fTier"></select></span>
+        </div>
+        <div class="field">
+          <label class="field__label" for="fBody">Governing body</label>
+          <span class="select"><select id="fBody"></select></span>
+        </div>
+        <div class="field">
+          <label class="field__label" for="fStatus">Status</label>
+          <span class="select">
+            <select id="fStatus">
+              <option value="">Live &amp; archived</option>
+              <option value="live">Live right now</option>
+              <option value="live,upcoming">Live &amp; upcoming</option>
+              <option value="recorded">Archived only</option>
+            </select>
+          </span>
+        </div>
+        <div class="field">
+          <label class="field__label" for="fSort">Sort by</label>
+          <span class="select">
+            <select id="fSort">
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="longest">Longest runtime</option>
+              <option value="shortest">Shortest runtime</option>
+              <option value="population-desc">Largest community</option>
+              <option value="population-asc">Smallest community</option>
+              <option value="town">Town A–Z</option>
+            </select>
+          </span>
+        </div>
+        <div class="filterbar__reset">
+          <button class="btn btn--outline" type="button" id="resetBtn">Clear all</button>
+        </div>
+      </div>
+      <div class="chips" id="chips"></div>
+    </div>
+  </div>
+
+  <!-- ============ RESULTS ============ -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section__head">
+        <div>
+          <div class="section__eyebrow">The Library</div>
+          <h2 class="section__title">Look in on any community</h2>
+          <p class="section__sub">Complete, unedited recordings of council sessions, select board meetings, county commissions, planning hearings and school boards. No commentary. No analysis.</p>
+        </div>
+      </div>
+      <div class="grid" id="results"></div>
+      <div class="morewrap" id="moreWrap">
+        <button class="btn btn--outline" type="button" id="moreBtn">Show more meetings</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WHAT'S NEW THIS WEEK ============ -->
+  <section class="section section--sunken" id="newweek">
+    <div class="wrap">
+      <div class="section__head">
+        <div>
+          <div class="section__eyebrow">Just Added</div>
+          <h2 class="section__title">What's new this week</h2>
+          <p class="section__sub">The most recent proceedings ingested from municipal and county feeds.</p>
+        </div>
+        <div class="section__actions">
+          <div class="scrollbtns">
+            <button class="scrollbtn" type="button" id="newPrev" aria-label="Scroll left">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+            </button>
+            <button class="scrollbtn" type="button" id="newNext" aria-label="Scroll right">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="scroller" id="newScroller"></div>
+    </div>
+  </section>
+
+  <!-- ============ TOP COMMUNITY TOPICS ============ -->
+  <section class="section" id="topics">
+    <div class="wrap">
+      <div class="section__head">
+        <div>
+          <div class="section__eyebrow">Trending on the Agenda</div>
+          <h2 class="section__title">Top community topics</h2>
+          <p class="section__sub">Ranked by how often each subject appears across the library. Select one to filter the results above. Tags come only from what each town publishes — never from our own reading of a meeting.</p>
+        </div>
+        <div class="section__actions">
+          <button class="btn btn--outline btn--sm" type="button" id="topicClear">Clear topic</button>
+        </div>
+      </div>
+      <div class="topicgrid" id="topicGrid"></div>
+      <p class="topicnote" id="topicNote"></p>
+    </div>
+  </section>
+
+  <!-- ============ INLINE AD ============ -->
+  <section class="section section--tight" id="advertise" aria-label="Advertisement">
+    <div class="wrap">
+      <div class="adslot">
+        <div class="adslot__label">Advertisement · In-feed native</div>
+        <div class="ad-inline">
+          <div class="ad-inline__art">RIVERSIDE<br />HARDWARE<br />&amp; SUPPLY</div>
+          <div>
+            <div class="ad-inline__eyebrow">Sponsored by a local business</div>
+            <h3>Contractor-grade tools, five minutes from City Hall.</h3>
+            <p>Riverside Hardware has outfitted this county's builders since 1974. Show your Community-Span SPAN+ membership at the register for 10% off any order over $50.</p>
+          </div>
+          <div class="ad-inline__side">
+            <button class="btn" type="button">Get Directions</button>
+            <span class="ad-inline__dims">728 × 90 / native unit</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COMMUNITY STAR + STATS ============ -->
+  <section class="section" id="star">
+    <div class="wrap">
+      <div class="section__head">
+        <div>
+          <div class="section__eyebrow">Civic Role Models</div>
+          <h2 class="section__title">Community star of the week</h2>
+          <p class="section__sub">Every week we highlight one resident, volunteer or official whose service shows up in the record.</p>
+        </div>
+      </div>
+      <div class="spotlight">
+        <article class="star">
+          <div class="star__av" aria-hidden="true">DH</div>
+          <div>
+            <span class="badge badge--gold">Star of the week · Aug 24</span>
+            <h3 class="star__name">Dolores Hartwell</h3>
+            <div class="star__role">Volunteer Chair, Zoning Board of Appeals · Southwick, MA</div>
+            <p class="star__quote">"I've sat through 214 hearings in eleven years. Somebody has to read the whole packet — that's the job."</p>
+            <p class="star__note">Illustrative sample content for this prototype. In production, nominations are submitted by residents and verified against the public meeting record before publication.</p>
+          </div>
+        </article>
+        <div class="stats" id="stats"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MISSION ============ -->
+  <section class="mission" id="mission">
+    <div class="wrap mission__grid">
+      <div>
+        <div class="mission__eyebrow">Our Mission</div>
+        <h2>Community is what binds us together as a people.</h2>
+      </div>
+      <div class="mission__cols">
+        <div>
+          <span class="mission__n">1</span>
+          <p class="mission__p">To provide Community-SPAN's audience access to every local town and city government proceeding across the country, and to other local forums where local public policy is discussed, debated and decided — all without editing, commentary or analysis, and with a balanced presentation of points of view.</p>
+        </div>
+        <div>
+          <span class="mission__n">2</span>
+          <p class="mission__p">To provide elected and appointed officials at every level of government, and others who would influence public policy, a direct conduit to the audience without filtering or otherwise distorting their points of view.</p>
+          <p class="mission__p">We build interest in local participation, promote civic duty by holding up those already serving as role models, and foster the notion that we are all members of a community — our own local, our state and our country.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__grid">
+      <div>
+        <h4>Community-Span</h4>
+        <p class="footer__about">A content platform aggregating town, city, county and school district government feeds from around the country — giving anyone the ability to look in on their own community, and everyone else's.</p>
+      </div>
+      <div>
+        <h4>Watch</h4>
+        <ul>
+          <li><a href="#library">Full library</a></li>
+          <li><a href="#newweek">New this week</a></li>
+          <li><a href="#upcoming">Live &amp; upcoming</a></li>
+          <li><a href="#topics">Browse by topic</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Participate</h4>
+        <ul>
+          <li><a href="#star">Nominate a community star</a></li>
+          <li><a href="#library">Add your town's feed</a></li>
+          <li><a href="#mission">For elected officials</a></li>
+          <li><a href="#advertise">Advertise locally</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>SPAN+</h4>
+        <ul>
+          <li><a href="#top">Ad-free streaming</a></li>
+          <li><a href="#top">Unlimited archive access</a></li>
+          <li><a href="#top">Agenda alerts for your town</a></li>
+          <li><a href="#top">Gift a membership</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <p>© 2026 Community-Span · Working concept</p>
+      <p class="footer__disclaimer">All video streams from the official public YouTube channels of the municipalities, counties and school districts shown, and remains the property of those bodies. Topic tags are generated automatically from each meeting's published title, description and governing body — Community-Span adds no editing, commentary or analysis. Advertising units and the community star module are illustrative placeholders in this build.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
