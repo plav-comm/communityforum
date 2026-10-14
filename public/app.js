@@ -407,6 +407,11 @@
       '<b>' + state.total + '</b> ' + (state.total === 1 ? 'proceeding' : 'proceedings') + ' in view'));
     activeFilters().forEach((pair) => box.appendChild(filterChip(pair)));
     markActiveFields();
+    if (flashCount) {
+      flashCount = false;
+      const count = box.querySelector('.chips__count');
+      if (count) count.classList.add('is-updated');
+    }
   }
 
   /* ------------------------------------------------------------
@@ -614,10 +619,10 @@
         b.addEventListener('click', () => {
           state.query.topic = state.query.topic === t.slug ? '' : t.slug;
           state.page = 1;
+          scrollToResults();
           buildDropdowns();
           renderResults();
           renderTopics();
-          scrollToResults();
         });
       }
       box.appendChild(b);
@@ -641,17 +646,20 @@
   }
 
   /**
-   * Bring the meeting list into view. The filter bar is sticky, so scrolling to
-   * it does nothing once it is pinned — scroll to the results instead, leaving
-   * room for the pinned header and filter bar above them.
+   * Bring the filters and the meeting list into view, just below the pinned
+   * site header, so the effect of a choice made further down the page is seen.
    */
   function scrollToResults() {
-    const section = $('#results').closest('section') || $('#results');
-    const bar = $('#library');
-    const covered = bar ? Math.max(bar.getBoundingClientRect().bottom, 0) : 0;
-    const top = section.getBoundingClientRect().top + window.scrollY - covered + 8;
+    const target = $('#library') || $('#results');
+    const header = document.querySelector('.masthead');
+    const covered = header ? header.getBoundingClientRect().bottom : 0;
+    const top = target.getBoundingClientRect().top + window.scrollY - covered;
     window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
+    flashCount = true;
   }
+
+  // Set when a change was made out of sight; the next results paint flashes the count.
+  let flashCount = false;
 
   /** Topic counts, from the API or computed from the sample. */
   async function loadTopics() {
@@ -780,7 +788,8 @@
 
     $('#resetBtn').addEventListener('click', resetAll);
     $('#topicClear').addEventListener('click', () => {
-      state.query.topic = ''; state.page = 1; renderResults(); renderTopics();
+      state.query.topic = ''; state.page = 1;
+      scrollToResults(); buildDropdowns(); renderResults(); renderTopics();
     });
     $('#moreBtn').addEventListener('click', () => { state.page += 1; renderResults(); });
 

@@ -467,7 +467,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); margin: 0; line-height: 1.12;
    FILTER BAR
    ============================================================ */
 .filterbar {
-  position: sticky; top: 64px; z-index: 50;
+  position: relative; z-index: 2;
   background: var(--surface); border-bottom: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
 }
@@ -545,6 +545,13 @@ h1, h2, h3, h4 { font-family: var(--font-display); margin: 0; line-height: 1.12;
   color: var(--text); margin-right: var(--space-2);
 }
 .chips__count b { color: var(--primary); }
+.chips__count { border-radius: var(--radius-sm); padding: 2px 6px; margin-left: -6px; }
+.chips__count.is-updated { animation: countflash 1.6s ease-out; }
+@keyframes countflash {
+  0%, 35% { background: var(--primary-soft); box-shadow: 0 0 0 3px var(--primary-soft); }
+  100% { background: transparent; box-shadow: 0 0 0 3px transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .chips__count.is-updated { animation: none; } }
 .chip {
   display: inline-flex; align-items: center; gap: 6px;
   background: var(--primary-soft); color: var(--primary);
@@ -783,7 +790,6 @@ h1, h2, h3, h4 { font-family: var(--font-display); margin: 0; line-height: 1.12;
 }
 @media (max-width: 720px) {
   .masthead__inner { min-height: 58px; gap: var(--space-3); }
-  .filterbar { top: 58px; }
   .searchbox { display: none; }
   .utility__mission { display: none; }
   .utility__inner { justify-content: flex-end; }
