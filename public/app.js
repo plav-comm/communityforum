@@ -617,7 +617,7 @@
           buildDropdowns();
           renderResults();
           renderTopics();
-          $('#library').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          scrollToResults();
         });
       }
       box.appendChild(b);
@@ -638,6 +638,19 @@
     } else if (note) {
       note.textContent = '';
     }
+  }
+
+  /**
+   * Bring the meeting list into view. The filter bar is sticky, so scrolling to
+   * it does nothing once it is pinned — scroll to the results instead, leaving
+   * room for the pinned header and filter bar above them.
+   */
+  function scrollToResults() {
+    const section = $('#results').closest('section') || $('#results');
+    const bar = $('#library');
+    const covered = bar ? Math.max(bar.getBoundingClientRect().bottom, 0) : 0;
+    const top = section.getBoundingClientRect().top + window.scrollY - covered + 8;
+    window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
   }
 
   /** Topic counts, from the API or computed from the sample. */
