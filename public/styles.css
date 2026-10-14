@@ -364,6 +364,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); margin: 0; line-height: 1.12;
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   color: #8fb6ea; font-family: var(--font-display); font-size: var(--text-sm);
   background: #000; transition: opacity 0.2s;
+  pointer-events: none;
 }
 .player__frame[data-loaded="1"] .player__loading { opacity: 0; pointer-events: none; }
 .player__meta { margin-top: var(--space-5); }
