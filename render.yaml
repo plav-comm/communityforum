@@ -25,10 +25,11 @@ services:
       - key: LOG_LEVEL
         value: info
       - key: PUBLIC_BASE_URL
-        fromService:
-          type: web
-          name: townhallmeetings
-          property: host          # Render fills in https://<host> for you
+        # The public address YouTube calls back. Render's "host" property is the
+        # internal private-network name, which YouTube cannot reach, so this is
+        # set explicitly. Connect the domain in Render before running
+        # `npm run subscribe`.
+        value: https://townhallmeetings.org
       - key: DATABASE_URL
         sync: false
       - key: YOUTUBE_API_KEY
@@ -51,10 +52,11 @@ services:
       - key: NODE_ENV
         value: production
       - key: PUBLIC_BASE_URL
-        fromService:
-          type: web
-          name: townhallmeetings
-          property: host
+        # The public address YouTube calls back. Render's "host" property is the
+        # internal private-network name, which YouTube cannot reach, so this is
+        # set explicitly. Connect the domain in Render before running
+        # `npm run subscribe`.
+        value: https://townhallmeetings.org
       - key: DATABASE_URL
         sync: false
       - key: YOUTUBE_API_KEY
