@@ -176,6 +176,18 @@ async function resolveChannelId(input) {
     if (data.items && data.items[0]) return data.items[0].id;
   }
 
+  // Older custom URLs: youtube.com/c/Name or youtube.com/Name. The API has no
+  // lookup for these, but the name is very often also the channel's handle
+  // or legacy username, so try both.
+  const custom = raw.match(/youtube\.com\/(?:c\/)?([A-Za-z0-9._-]+)\/?(?:[?#].*|\/(?:videos|streams|featured|live)\/?)?$/);
+  const reserved = ['watch', 'channel', 'user', 'playlist', 'live', 'shorts', 'results', 'feed', 'embed'];
+  if (custom && !reserved.includes(custom[1].toLowerCase())) {
+    const byHandle = await call('/channels', { part: 'id', forHandle: custom[1] });
+    if (byHandle.items && byHandle.items[0]) return byHandle.items[0].id;
+    const byUser = await call('/channels', { part: 'id', forUsername: custom[1] });
+    if (byUser.items && byUser.items[0]) return byUser.items[0].id;
+  }
+
   const video = raw.match(/(?:v=|youtu\.be\/|\/live\/|\/shorts\/)([\w-]{11})/);
   if (video) {
     const vids = await getVideos([video[1]]);

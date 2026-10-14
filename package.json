@@ -2,7 +2,7 @@
   "name": "community-span",
   "version": "1.0.0",
   "private": true,
-  "description": "Community-Span \u2014 real-time aggregation and civic topic tagging of public municipal YouTube meeting streams.",
+  "description": "Community-Span — real-time aggregation and civic topic tagging of public municipal YouTube meeting streams.",
   "type": "commonjs",
   "engines": {
     "node": ">=20"
@@ -20,7 +20,8 @@
     "test": "node test/run.js",
     "discover": "node scripts/discover-agenda-sources.js",
     "agendas": "node scripts/sync-agendas.js",
-    "restore-demo": "node scripts/restore-demo.js"
+    "restore-demo": "node scripts/restore-demo.js",
+    "check-channels": "node scripts/check-channels.js"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
