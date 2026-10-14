@@ -374,6 +374,7 @@
     if (key === 'state') { q.county = ''; q.city = ''; }
     if (key === 'county') q.city = '';
     state.page = 1;
+    flashCount = true;
     buildDropdowns();
     renderResults();
     renderTopics();
@@ -400,17 +401,44 @@
     });
   }
 
+  // Size of the whole library, remembered whenever no filter is on, so a
+  // filtered view can say "13 of 35".
+  let libraryTotal = 0;
+
+  /** The "Showing ..." line directly above the meetings. */
   function renderChips() {
     const box = $('#chips');
+    const active = activeFilters();
+    const n = state.total;
+    if (!active.length) libraryTotal = n;
+    const noun = (k) => (k === 1 ? 'meeting' : 'meetings');
+
     box.innerHTML = '';
-    box.appendChild(el('span', 'chips__count',
-      '<b>' + state.total + '</b> ' + (state.total === 1 ? 'proceeding' : 'proceedings') + ' in view'));
-    activeFilters().forEach((pair) => box.appendChild(filterChip(pair)));
+    box.classList.toggle('is-filtered', active.length > 0);
+
+    const count = el('span', 'libstatus__count',
+      active.length
+        ? 'Showing <b>' + n + '</b>' + (libraryTotal ? ' of ' + libraryTotal : '') + ' ' + noun(libraryTotal || n)
+        : 'Showing all <b>' + n + '</b> ' + noun(n));
+    box.appendChild(count);
+
+    if (active.length) {
+      box.appendChild(el('span', 'libstatus__by', 'filtered by'));
+      const list = el('span', 'libstatus__chips');
+      active.forEach((pair) => list.appendChild(filterChip(pair)));
+      box.appendChild(list);
+      const clear = el('button', 'libstatus__clear', 'Clear all');
+      clear.type = 'button';
+      clear.addEventListener('click', resetAll);
+      box.appendChild(clear);
+    }
+
     markActiveFields();
     if (flashCount) {
       flashCount = false;
-      const count = box.querySelector('.chips__count');
-      if (count) count.classList.add('is-updated');
+      box.classList.remove('is-updated');
+      void box.offsetWidth;            // restart the animation
+      box.classList.add('is-updated');
     }
   }
 
@@ -599,11 +627,9 @@
     // characterise from what towns publish.
     const list = state.topics.filter((t) => t.show_in_trending !== false);
     if (!list.length) return;
-    const max = Math.max.apply(null, list.map((t) => t.video_count)) || 1;
-
-    list.forEach((t, i) => {
+    list.forEach((t) => {
       const empty = !t.video_count;
-      const b = el('button', 'topic' + (empty ? ' topic--empty' : ''));
+      const b = el('button', 'tpill' + (empty ? ' tpill--empty' : ''));
       b.type = 'button';
       b.disabled = empty;
       b.setAttribute('aria-pressed', String(state.query.topic === t.slug));
@@ -611,16 +637,13 @@
         ? t.label + ' — no meetings tagged with this topic yet'
         : (t.description || t.label);
       b.innerHTML =
-        '<span class="topic__rank">' + String(i + 1).padStart(2, '0') + '</span>' +
-        '<span class="topic__name">' + esc(t.label) + '</span>' +
-        '<span class="topic__n">' + (empty ? 'none yet' : t.video_count + (t.video_count === 1 ? ' video' : ' videos')) + '</span>' +
-        '<span class="topic__bar" style="width:' + Math.round((t.video_count / max) * 100) + '%"></span>';
+        '<span class="tpill__name">' + esc(t.label) + '</span>' +
+        '<span class="tpill__n">' + (empty ? '0' : t.video_count) + '</span>';
       if (!empty) {
         b.addEventListener('click', () => {
           state.query.topic = state.query.topic === t.slug ? '' : t.slug;
           state.page = 1;
           scrollToResults();
-          buildDropdowns();
           renderResults();
           renderTopics();
         });
@@ -636,25 +659,28 @@
       const { tagged, total } = state.coverage;
       const backed = state.coverage.agendaBacked || 0;
       note.textContent =
-        tagged + ' of ' + total + ' meetings carry a specific subject tag' +
-        (backed ? ', ' + backed + ' of them confirmed against the town\u2019s published agenda' : '') +
-        '. The rest are full mixed-agenda sessions filed under General Session, because the ' +
-        'title and description the town published do not say what was discussed.';
+        tagged + ' of ' + total + ' meetings have a specific subject tag' +
+        (backed ? ' (' + backed + ' confirmed against the town\u2019s published agenda)' : '') +
+        '. Most towns title videos like \u201cCity Council Meeting 8/11\u201d without saying what was ' +
+        'discussed, so the rest are filed under General Session.';
     } else if (note) {
       note.textContent = '';
     }
   }
 
   /**
-   * Bring the filters and the meeting list into view, just below the pinned
-   * site header, so the effect of a choice made further down the page is seen.
+   * Make sure the "Showing ..." line is on screen after a filter change, and
+   * flash it so the change is noticed. Scrolls only when it is out of view.
    */
   function scrollToResults() {
-    const target = $('#library') || $('#results');
+    const target = $('#chips');
     const header = document.querySelector('.masthead');
     const covered = header ? header.getBoundingClientRect().bottom : 0;
-    const top = target.getBoundingClientRect().top + window.scrollY - covered;
-    window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
+    const r = target.getBoundingClientRect();
+    if (r.top < covered || r.bottom > window.innerHeight - 120) {
+      const top = r.top + window.scrollY - covered - 12;
+      window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
+    }
     flashCount = true;
   }
 
@@ -754,7 +780,7 @@
      Wiring
      ------------------------------------------------------------ */
   function bind() {
-    const rerender = () => { state.page = 1; buildDropdowns(); renderResults(); };
+    const rerender = () => { state.page = 1; flashCount = true; buildDropdowns(); renderResults(); };
 
     $('#fState').addEventListener('change', (e) => {
       state.query.state = e.target.value; state.query.county = ''; state.query.city = ''; rerender();
@@ -787,10 +813,12 @@
     });
 
     $('#resetBtn').addEventListener('click', resetAll);
-    $('#topicClear').addEventListener('click', () => {
-      state.query.topic = ''; state.page = 1;
-      scrollToResults(); buildDropdowns(); renderResults(); renderTopics();
-    });
+    if ($('#topicClear')) {
+      $('#topicClear').addEventListener('click', () => {
+        state.query.topic = ''; state.page = 1;
+        scrollToResults(); renderResults(); renderTopics();
+      });
+    }
     $('#moreBtn').addEventListener('click', () => { state.page += 1; renderResults(); });
 
     $('#tab-featured').addEventListener('click', () => switchTab('featured'));

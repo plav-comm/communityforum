@@ -467,15 +467,13 @@ h1, h2, h3, h4 { font-family: var(--font-display); margin: 0; line-height: 1.12;
    FILTER BAR
    ============================================================ */
 .filterbar {
-  position: relative; z-index: 2;
-  background: var(--surface); border-bottom: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: var(--space-4);
 }
-.filterbar__inner { padding-block: var(--space-4); }
 .filterbar__row {
   display: grid; gap: var(--space-3);
-  /* 8 filters + reset = 9 cells: 5 + 4 on desktop, 3 x 3 mid-width */
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  /* 7 filters + reset = 8 cells, two tidy rows of four */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: end;
 }
 .field { min-width: 0; }
@@ -503,9 +501,66 @@ h1, h2, h3, h4 { font-family: var(--font-display); margin: 0; line-height: 1.12;
 }
 .filterbar__reset { align-self: end; }
 .filterbar__reset .btn { width: 100%; }
-@media (max-width: 1080px) and (min-width: 721px) {
-  .filterbar__row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* ---- Library: topic buttons ---- */
+.libtopics { margin-bottom: var(--space-4); }
+.libtopics__head {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-3);
 }
+.libtopics__title {
+  font-family: var(--font-display); font-size: 0.625rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint);
+}
+.libtopics__hint { font-size: var(--text-xs); color: var(--text-faint); }
+.topicrow { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.tpill {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 100px;
+  padding: 6px 6px 6px var(--space-4); cursor: pointer;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--text-sm); color: var(--text);
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.tpill:hover { border-color: var(--primary); color: var(--primary); }
+.tpill__n {
+  min-width: 26px; text-align: center; font-size: var(--text-xs);
+  background: var(--surface-offset); color: var(--text-muted);
+  padding: 2px var(--space-2); border-radius: 100px;
+}
+.tpill[aria-pressed='true'] { background: var(--primary); border-color: var(--primary); color: #fff; }
+.tpill[aria-pressed='true'] .tpill__n { background: rgba(255, 255, 255, 0.22); color: #fff; }
+.tpill--empty { opacity: 0.45; cursor: not-allowed; }
+.tpill--empty:hover { border-color: var(--border); color: var(--text); }
+.library .topicnote { margin-top: var(--space-3); font-size: var(--text-xs); }
+
+/* ---- Library: the "Showing ..." line above the meetings ---- */
+.libstatus {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3);
+  margin: var(--space-4) 0 var(--space-5); padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius); border: 1px solid transparent;
+  font-family: var(--font-display); font-size: var(--text-sm); color: var(--text-muted);
+}
+.libstatus b { color: var(--text); font-weight: 800; }
+.libstatus.is-filtered {
+  background: var(--primary-soft); border-color: var(--primary);
+  color: var(--primary);
+}
+.libstatus.is-filtered b { color: var(--primary); }
+.libstatus__count { font-weight: 600; }
+.libstatus__by { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; opacity: 0.8; }
+.libstatus__chips { display: inline-flex; flex-wrap: wrap; gap: var(--space-2); }
+.libstatus .chip { background: var(--surface); border-color: var(--primary); }
+.libstatus__clear {
+  margin-left: auto; background: none; border: 0; cursor: pointer; padding: 4px 0;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--text-sm);
+  color: var(--primary); text-decoration: underline; text-underline-offset: 3px;
+}
+.libstatus.is-updated { animation: statusflash 1.4s ease-out; }
+@keyframes statusflash {
+  0%, 30% { box-shadow: 0 0 0 4px var(--primary-soft), 0 0 0 5px var(--primary); }
+  100% { box-shadow: 0 0 0 4px transparent, 0 0 0 5px transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .libstatus.is-updated { animation: none; } }
 /* A filter that is switched on is visibly different from one that is not. */
 .select.is-active select {
   border-color: var(--primary); background: var(--primary-soft); color: var(--primary);

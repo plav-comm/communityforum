@@ -129,69 +129,8 @@
     </div>
   </section>
 
-  <!-- ============ FILTER BAR ============ -->
-  <div class="filterbar" id="library">
-    <div class="wrap filterbar__inner">
-      <div class="filterbar__row">
-        <div class="field">
-          <label class="field__label" for="fState">State</label>
-          <span class="select"><select id="fState"></select></span>
-        </div>
-        <div class="field">
-          <label class="field__label" for="fCounty">County</label>
-          <span class="select"><select id="fCounty"></select></span>
-        </div>
-        <div class="field">
-          <label class="field__label" for="fCity">City / Town</label>
-          <span class="select"><select id="fCity"></select></span>
-        </div>
-        <div class="field">
-          <label class="field__label" for="fTier">Community size</label>
-          <span class="select"><select id="fTier"></select></span>
-        </div>
-        <div class="field">
-          <label class="field__label" for="fBody">Governing body</label>
-          <span class="select"><select id="fBody"></select></span>
-        </div>
-        <div class="field">
-          <label class="field__label" for="fTopic">Topic</label>
-          <span class="select"><select id="fTopic"></select></span>
-        </div>
-        <div class="field">
-          <label class="field__label" for="fStatus">Status</label>
-          <span class="select">
-            <select id="fStatus">
-              <option value="">Live &amp; archived</option>
-              <option value="live">Live right now</option>
-              <option value="live,upcoming">Live &amp; upcoming</option>
-              <option value="recorded">Archived only</option>
-            </select>
-          </span>
-        </div>
-        <div class="field">
-          <label class="field__label" for="fSort">Sort by</label>
-          <span class="select">
-            <select id="fSort">
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
-              <option value="longest">Longest runtime</option>
-              <option value="shortest">Shortest runtime</option>
-              <option value="population-desc">Largest community</option>
-              <option value="population-asc">Smallest community</option>
-              <option value="town">Town A–Z</option>
-            </select>
-          </span>
-        </div>
-        <div class="filterbar__reset">
-          <button class="btn btn--outline" type="button" id="resetBtn">Clear all</button>
-        </div>
-      </div>
-      <div class="chips" id="chips"></div>
-    </div>
-  </div>
-
-  <!-- ============ RESULTS ============ -->
-  <section class="section">
+  <!-- ============ THE LIBRARY: topics + filters + results, one block ============ -->
+  <section class="section library" id="library">
     <div class="wrap">
       <div class="section__head">
         <div>
@@ -200,6 +139,71 @@
           <p class="section__sub">Complete, unedited recordings of council sessions, select board meetings, county commissions, planning hearings and school boards. No commentary. No analysis.</p>
         </div>
       </div>
+
+      <div class="libtopics" id="topics">
+        <div class="libtopics__head">
+          <span class="libtopics__title">Browse by topic</span>
+          <span class="libtopics__hint">Ranked by how often each subject appears. Tags come only from what each town publishes.</span>
+        </div>
+        <div class="topicrow" id="topicGrid"></div>
+        <p class="topicnote" id="topicNote"></p>
+      </div>
+
+      <div class="filterbar">
+        <div class="filterbar__row">
+          <div class="field">
+            <label class="field__label" for="fState">State</label>
+            <span class="select"><select id="fState"></select></span>
+          </div>
+          <div class="field">
+            <label class="field__label" for="fCounty">County</label>
+            <span class="select"><select id="fCounty"></select></span>
+          </div>
+          <div class="field">
+            <label class="field__label" for="fCity">City / Town</label>
+            <span class="select"><select id="fCity"></select></span>
+          </div>
+          <div class="field">
+            <label class="field__label" for="fTier">Community size</label>
+            <span class="select"><select id="fTier"></select></span>
+          </div>
+          <div class="field">
+            <label class="field__label" for="fBody">Governing body</label>
+            <span class="select"><select id="fBody"></select></span>
+          </div>
+          <div class="field">
+            <label class="field__label" for="fStatus">Status</label>
+            <span class="select">
+              <select id="fStatus">
+                <option value="">Live &amp; archived</option>
+                <option value="live">Live right now</option>
+                <option value="live,upcoming">Live &amp; upcoming</option>
+                <option value="recorded">Archived only</option>
+              </select>
+            </span>
+          </div>
+          <div class="field">
+            <label class="field__label" for="fSort">Sort by</label>
+            <span class="select">
+              <select id="fSort">
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="longest">Longest runtime</option>
+                <option value="shortest">Shortest runtime</option>
+                <option value="population-desc">Largest community</option>
+                <option value="population-asc">Smallest community</option>
+                <option value="town">Town A–Z</option>
+              </select>
+            </span>
+          </div>
+          <div class="filterbar__reset">
+            <button class="btn btn--outline" type="button" id="resetBtn">Clear all</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="libstatus" id="chips" aria-live="polite"></div>
+
       <div class="grid" id="results"></div>
       <div class="morewrap" id="moreWrap">
         <button class="btn btn--outline" type="button" id="moreBtn">Show more meetings</button>
@@ -214,7 +218,7 @@
         <div>
           <div class="section__eyebrow">Just Added</div>
           <h2 class="section__title">What's new this week</h2>
-          <p class="section__sub">The most recent proceedings ingested from municipal and county feeds.</p>
+          <p class="section__sub">The latest uploads from every town we follow. This strip always shows everything — the Library filters above do not apply here.</p>
         </div>
         <div class="section__actions">
           <div class="scrollbtns">
@@ -228,24 +232,6 @@
         </div>
       </div>
       <div class="scroller" id="newScroller"></div>
-    </div>
-  </section>
-
-  <!-- ============ TOP COMMUNITY TOPICS ============ -->
-  <section class="section" id="topics">
-    <div class="wrap">
-      <div class="section__head">
-        <div>
-          <div class="section__eyebrow">Trending on the Agenda</div>
-          <h2 class="section__title">Top community topics</h2>
-          <p class="section__sub">Ranked by how often each subject appears across the library. Select one to filter the results above. Tags come only from what each town publishes — never from our own reading of a meeting.</p>
-        </div>
-        <div class="section__actions">
-          <button class="btn btn--outline btn--sm" type="button" id="topicClear">Clear topic</button>
-        </div>
-      </div>
-      <div class="topicgrid" id="topicGrid"></div>
-      <p class="topicnote" id="topicNote"></p>
     </div>
   </section>
 
