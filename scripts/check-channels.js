@@ -22,6 +22,35 @@ const fs = require('fs');
 const path = require('path');
 const { config } = require('../server/config');
 const youtube = require('../server/lib/youtube');
+const { looksLikeMeeting } = require('../server/lib/meetings');
+
+const STATES = ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut',
+  'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas',
+  'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota',
+  'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey',
+  'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon',
+  'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah',
+  'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'];
+
+/** Words that should appear somewhere in an official channel's name or description. */
+function placeWords(r) {
+  const strip = (s) => String(s || '').replace(/\b(county|city|town|township|borough|of|the)\b/gi, ' ').trim();
+  return [strip(r.municipality), strip(r.county)].filter((w) => w.length >= 3);
+}
+
+/** A different state named in the channel's text, if any (and not the expected one). */
+function otherState(text, expected) {
+  const t = ' ' + text + ' ';
+  const exp = String(expected || '').toLowerCase();
+  if (exp && t.toLowerCase().includes(exp)) return null;
+  for (const s of STATES) {
+    if (s.toLowerCase() === exp) continue;
+    // "West Virginia" contains "Virginia", "Arkansas" contains "Kansas": match whole names only
+    const re = new RegExp('(^|[^a-z])' + s.toLowerCase() + '([^a-z]|$)');
+    if (re.test(t.toLowerCase())) return s;
+  }
+  return null;
+}
 
 const STALE_DAYS = Number(process.env.STALE_DAYS || 60);
 
@@ -91,16 +120,15 @@ async function main() {
   const channels = await youtube.getChannels(rows.filter((r) => r.id).map((r) => r.id));
   const byId = new Map(channels.map((c) => [c.ytChannelId, c]));
 
-  // 3. Each channel's most recent upload.
-  const latestId = new Map();
+  // 3. Each channel's 10 most recent uploads, to see how many are meetings.
+  const recentIds = new Map();
   for (const c of channels) {
     if (!c.uploadsPlaylistId) continue;
     try {
-      const ids = await youtube.getPlaylistVideoIds(c.uploadsPlaylistId, 1);
-      if (ids[0]) latestId.set(c.ytChannelId, ids[0]);
+      recentIds.set(c.ytChannelId, await youtube.getPlaylistVideoIds(c.uploadsPlaylistId, 10));
     } catch (err) { /* empty or private uploads list */ }
   }
-  const vids = await youtube.getVideos([...latestId.values()]);
+  const vids = await youtube.getVideos([].concat(...recentIds.values()));
   const vidById = new Map(vids.map((v) => [v.ytVideoId, v]));
 
   // 4. Verdicts.
@@ -117,13 +145,30 @@ async function main() {
       continue;
     }
     seen.set(r.id, `${r.municipality} ${r.govbody}`);
-    const v = vidById.get(latestId.get(r.id));
-    if (!v) { r.problem = 'NO VIDEOS'; continue; }
+
+    // Is this really the right place? Same-named towns in other states are the
+    // most common mistake (Lancaster PA vs Lancaster OH vs Lancaster County NE).
+    const text = `${c.title} ${c.description}`;
+    const wrong = otherState(text, r.statename);
+    if (wrong) { r.problem = `WRONG PLACE? — channel mentions ${wrong}`; continue; }
+    const words = placeWords(r);
+    if (words.length && !words.some((w) => text.toLowerCase().includes(w.toLowerCase()))) {
+      r.problem = `CHECK NAME — "${words.join('" / "')}" not in channel name or description`;
+      continue;
+    }
+
+    const recent = (recentIds.get(r.id) || []).map((id) => vidById.get(id)).filter(Boolean)
+      .sort((a, b) => String(b.publishedAt).localeCompare(String(a.publishedAt)));
+    if (!recent.length) { r.problem = 'NO VIDEOS'; continue; }
+    const meetings = recent.filter(looksLikeMeeting);
+    r.meetingShare = `${meetings.length}/${recent.length}`;
+    if (!meetings.length) { r.problem = `NO MEETINGS in last ${recent.length} uploads`; continue; }
+    const v = meetings[0];
     r.latestTitle = v.title;
     r.latestDate = (v.publishedAt || '').slice(0, 10);
     const days = Math.round((now - new Date(v.publishedAt).getTime()) / 864e5);
     r.days = days;
-    if (days > STALE_DAYS) r.problem = `STALE — last upload ${days} days ago`;
+    if (days > STALE_DAYS) r.problem = `STALE — last meeting ${days} days ago`;
   }
 
   // 5. Report.
@@ -132,8 +177,8 @@ async function main() {
   const line = (r) =>
     `  ${(r.problem ? '✗' : '✓')} ${(r.municipality + ' · ' + r.govbody).padEnd(42).slice(0, 42)} ` +
     `${(r.channelName || '—').padEnd(38).slice(0, 38)} ` +
-    (r.problem ? r.problem : `${r.latestDate}  ${String(r.latestTitle).slice(0, 50)}`);
-  console.log('  Town · body                                 YouTube channel name                   Result');
+    (r.problem ? r.problem : `${r.meetingShare.padStart(5)} meetings  ${r.latestDate}  ${String(r.latestTitle).slice(0, 44)}`);
+  console.log('  Town · body                                 YouTube channel name                   Recent uploads that are meetings · latest meeting');
   console.log('  ' + '-'.repeat(130));
   rows.forEach((r) => console.log(line(r)));
 
@@ -154,8 +199,9 @@ async function main() {
   console.log(`\n  ${ok.length} ready, ${review.length} need a look.`);
   console.log(`  Ready to paste:  ${base}.ready.csv`);
   console.log(`  Needs review:    ${base}.review.csv`);
-  console.log(`  Check the "YouTube channel name" column above — it should be the town's own`);
-  console.log(`  channel, not a TV station or a resident's account. YouTube units used: ${youtube.quotaUsed()}\n`);
+  console.log(`  Still glance at the channel names above: each should be the town's own channel`);
+  console.log(`  or its community-access station. Only meeting videos are imported, so a mixed`);
+  console.log(`  channel is fine. YouTube units used: ${youtube.quotaUsed()}\n`);
 }
 
 main().catch((err) => {

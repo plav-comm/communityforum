@@ -13,6 +13,7 @@ const youtube = require('../lib/youtube');
 const { classify, loadRules } = require('./classify');
 const { config } = require('../config');
 const log = require('../lib/log');
+const { looksLikeMeeting } = require('../lib/meetings');
 
 /** Look up our internal channel row from a YouTube channel ID. */
 async function findChannel(ytChannelId) {
@@ -76,6 +77,13 @@ async function ingestVideoIds(videoIds, { reason = 'manual' } = {}) {
       if (meta.privacyStatus && meta.privacyStatus !== 'public') {
         summary.skipped += 1;
         summary.results.push({ ytVideoId: meta.ytVideoId, action: 'skipped', why: 'not public' });
+        continue;
+      }
+
+      if (config.ingest.meetingsOnly && !looksLikeMeeting(meta)) {
+        summary.skipped += 1;
+        summary.results.push({ ytVideoId: meta.ytVideoId, action: 'skipped', why: 'not a meeting', title: meta.title });
+        log.debug('skipped non-meeting video', { id: meta.ytVideoId, title: meta.title });
         continue;
       }
 
