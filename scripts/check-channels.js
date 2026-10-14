@@ -41,6 +41,32 @@ function placeWords(r) {
   return [strip(r.municipality), strip(r.county)].filter((w) => w.length >= 3);
 }
 
+const CODES = {
+  AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado',
+  CT: 'Connecticut', DE: 'Delaware', FL: 'Florida', GA: 'Georgia', HI: 'Hawaii', ID: 'Idaho',
+  IL: 'Illinois', IN: 'Indiana', IA: 'Iowa', KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana',
+  ME: 'Maine', MD: 'Maryland', MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota',
+  MS: 'Mississippi', MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada',
+  NH: 'New Hampshire', NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York', NC: 'North Carolina',
+  ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania',
+  RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas',
+  UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington', WV: 'West Virginia',
+  WI: 'Wisconsin', WY: 'Wyoming'
+};
+
+/**
+ * A different state's two-letter code in the channel NAME ("Jacksonville NC"
+ * when we wanted Florida). Names only, and capitals only, because in running
+ * description text words like "in", "or" and "me" would match.
+ */
+function otherStateCode(title, expectedCode) {
+  const exp = String(expectedCode || '').toUpperCase();
+  const tokens = String(title || '').match(/\b[A-Z]{2}\b/g) || [];
+  if (tokens.includes(exp)) return null;
+  const hit = tokens.find((t) => CODES[t] && t !== exp);
+  return hit ? CODES[hit] : null;
+}
+
 /** A different state named in the channel's text, if any (and not the expected one). */
 function otherState(text, expected) {
   const t = ' ' + text + ' ';
@@ -153,7 +179,7 @@ async function main() {
     // Is this really the right place? Same-named towns in other states are the
     // most common mistake (Lancaster PA vs Lancaster OH vs Lancaster County NE).
     const text = `${c.title} ${c.description}`;
-    const wrong = otherState(text, r.statename);
+    const wrong = otherState(text, r.statename) || otherStateCode(c.title, r.statecode);
     if (wrong) { r.problem = `WRONG PLACE? — channel mentions ${wrong}`; continue; }
     const words = placeWords(r);
     if (words.length && !words.some((w) => text.toLowerCase().includes(w.toLowerCase()))) {
