@@ -17,6 +17,9 @@
  *
  * Nothing is added to the site by this script. Costs roughly 2-3 YouTube API
  * units per row (the free allowance is 10,000 a day).
+ *
+ * The admin page's bulk paste registers towns but does not pull their videos;
+ * run  npm run backfill -- 50  afterwards to fill them in.
  */
 const fs = require('fs');
 const path = require('path');
@@ -120,12 +123,13 @@ async function main() {
   const channels = await youtube.getChannels(rows.filter((r) => r.id).map((r) => r.id));
   const byId = new Map(channels.map((c) => [c.ytChannelId, c]));
 
-  // 3. Each channel's 10 most recent uploads, to see how many are meetings.
+  // 3. Each channel's 50 most recent uploads, to see how many are meetings.
+  //    Big-city channels post many short clips between meetings, so 10 is too few.
   const recentIds = new Map();
   for (const c of channels) {
     if (!c.uploadsPlaylistId) continue;
     try {
-      recentIds.set(c.ytChannelId, await youtube.getPlaylistVideoIds(c.uploadsPlaylistId, 10));
+      recentIds.set(c.ytChannelId, await youtube.getPlaylistVideoIds(c.uploadsPlaylistId, 50));
     } catch (err) { /* empty or private uploads list */ }
   }
   const vids = await youtube.getVideos([].concat(...recentIds.values()));
@@ -197,7 +201,7 @@ async function main() {
       .join('\n') + '\n');
 
   console.log(`\n  ${ok.length} ready, ${review.length} need a look.`);
-  console.log(`  Ready to paste:  ${base}.ready.csv`);
+  console.log(`  Ready to paste:  ${base}.ready.csv   (then run: npm run backfill -- 50)`);
   console.log(`  Needs review:    ${base}.review.csv`);
   console.log(`  Still glance at the channel names above: each should be the town's own channel`);
   console.log(`  or its community-access station. Only meeting videos are imported, so a mixed`);
