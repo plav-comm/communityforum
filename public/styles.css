@@ -474,8 +474,8 @@ h1, h2, h3, h4 { font-family: var(--font-display); margin: 0; line-height: 1.12;
 .filterbar__inner { padding-block: var(--space-4); }
 .filterbar__row {
   display: grid; gap: var(--space-3);
-  /* 7 filters + reset = 8 cells, two tidy rows of four */
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* 8 filters + reset = 9 cells: 5 + 4 on desktop, 3 x 3 mid-width */
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: end;
 }
 .field { min-width: 0; }
@@ -503,6 +503,14 @@ h1, h2, h3, h4 { font-family: var(--font-display); margin: 0; line-height: 1.12;
 }
 .filterbar__reset { align-self: end; }
 .filterbar__reset .btn { width: 100%; }
+@media (max-width: 1080px) and (min-width: 721px) {
+  .filterbar__row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+/* A filter that is switched on is visibly different from one that is not. */
+.select.is-active select {
+  border-color: var(--primary); background: var(--primary-soft); color: var(--primary);
+}
+.field__label.is-active { color: var(--primary); }
 
 /* data-source indicator in the utility bar */
 .srcbadge {
@@ -609,6 +617,10 @@ h1, h2, h3, h4 { font-family: var(--font-display); margin: 0; line-height: 1.12;
 .empty svg { color: var(--text-faint); margin-bottom: var(--space-3); }
 .empty h3 { font-size: var(--text-lg); }
 .empty p { color: var(--text-muted); font-size: var(--text-sm); margin: var(--space-2) auto var(--space-5); max-width: 42ch; }
+.empty__chips {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2);
+  margin: 0 auto var(--space-5); max-width: 60ch;
+}
 
 .morewrap { display: flex; justify-content: center; margin-top: var(--space-8); }
 

@@ -218,8 +218,15 @@
     fill($('#fBody'), 'All governing bodies',
       f.bodies.map((b) => ({ value: b, label: b })), q.body);
 
+    if ($('#fTopic')) {
+      fill($('#fTopic'), 'All topics',
+        state.topics.filter((t) => t.video_count || t.slug === q.topic)
+          .map((t) => ({ value: t.slug, label: t.label })), q.topic);
+    }
+
     $('#fSort').value = q.sort;
     if ($('#fStatus')) $('#fStatus').value = q.status;
+    markActiveFields();
   }
 
   /* ------------------------------------------------------------
@@ -303,12 +310,24 @@
     box.innerHTML = '';
 
     if (!data.items.length) {
-      box.appendChild(el('div', 'empty',
+      const active = activeFilters();
+      const empty = el('div', 'empty',
         '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>' +
-        '<h3>No proceedings match those filters</h3>' +
-        '<p>Community-Span is still onboarding municipal feeds. Try widening the state, county or population filters.</p>' +
-        '<button class="btn" type="button" data-reset>Clear all filters</button>'));
-      box.querySelector('[data-reset]').addEventListener('click', resetAll);
+        '<h3>No meetings match all of these filters together</h3>' +
+        '<p>' + (active.length > 1
+          ? 'Filters combine, so a meeting has to match every one. Remove one to widen the results:'
+          : 'Community-Span is still onboarding municipal feeds. Remove the filter to see everything:') +
+        '</p>');
+      if (active.length) {
+        const chips = el('div', 'empty__chips');
+        active.forEach((pair) => chips.appendChild(filterChip(pair)));
+        empty.appendChild(chips);
+      }
+      const reset = el('button', 'btn', 'Clear all filters');
+      reset.type = 'button';
+      reset.addEventListener('click', resetAll);
+      empty.appendChild(reset);
+      box.appendChild(empty);
       $('#moreWrap').hidden = true;
     } else {
       data.items.forEach((v) => box.appendChild(makeCard(v)));
@@ -323,44 +342,71 @@
   /* ------------------------------------------------------------
      Chips
      ------------------------------------------------------------ */
-  function renderChips() {
-    const box = $('#chips');
-    const q = state.query;
-    box.innerHTML = '';
-    box.appendChild(el('span', 'chips__count',
-      '<b>' + state.total + '</b> ' + (state.total === 1 ? 'proceeding' : 'proceedings') + ' in view'));
+  const STATUS_LABELS = {
+    live: 'Live now',
+    'live,upcoming': 'Live & upcoming',
+    recorded: 'Archived only'
+  };
+  const topicLabel = (slug) => {
+    const t = state.topics.find((x) => x.slug === slug);
+    return t ? t.label : slug;
+  };
 
-    const topicLabel = (slug) => {
-      const t = state.topics.find((x) => x.slug === slug);
-      return t ? t.label : slug;
-    };
-    const active = [
+  /** Every filter currently switched on, as [key, human label] pairs. */
+  function activeFilters() {
+    const q = state.query;
+    return [
       ['state', q.state && stateNameFor(q.state)],
       ['county', q.county],
       ['city', q.city],
       ['tier', q.tier && (TIER_LABELS[q.tier] + ' residents')],
       ['body', q.body],
-      ['topic', q.topic && topicLabel(q.topic)],
-      ['status', q.status && (q.status === 'live' ? 'Live now' : 'Live & upcoming')],
-      ['q', q.q && '“' + q.q + '”']
+      ['topic', q.topic && 'Topic: ' + topicLabel(q.topic)],
+      ['status', q.status && (STATUS_LABELS[q.status] || q.status)],
+      ['q', q.q && 'Search: “' + q.q + '”']
     ].filter((p) => p[1]);
+  }
 
-    active.forEach((pair) => {
-      const chip = el('button', 'chip', esc(pair[1]) + ' <span aria-hidden="true">×</span>');
-      chip.type = 'button';
-      chip.setAttribute('aria-label', 'Remove filter ' + pair[1]);
-      chip.addEventListener('click', () => {
-        q[pair[0]] = '';
-        if (pair[0] === 'q') $('#search').value = '';
-        if (pair[0] === 'state') { q.county = ''; q.city = ''; }
-        if (pair[0] === 'county') q.city = '';
-        state.page = 1;
-        buildDropdowns();
-        renderResults();
-        renderTopics();
-      });
-      box.appendChild(chip);
+  function removeFilter(key) {
+    const q = state.query;
+    q[key] = '';
+    if (key === 'q') $('#search').value = '';
+    if (key === 'state') { q.county = ''; q.city = ''; }
+    if (key === 'county') q.city = '';
+    state.page = 1;
+    buildDropdowns();
+    renderResults();
+    renderTopics();
+  }
+
+  function filterChip(pair) {
+    const chip = el('button', 'chip', esc(pair[1]) + ' <span aria-hidden="true">×</span>');
+    chip.type = 'button';
+    chip.setAttribute('aria-label', 'Remove filter ' + pair[1]);
+    chip.addEventListener('click', () => removeFilter(pair[0]));
+    return chip;
+  }
+
+  /** Highlight each dropdown that is narrowing the results. */
+  function markActiveFields() {
+    const q = state.query;
+    [['#fState', q.state], ['#fCounty', q.county], ['#fCity', q.city], ['#fTier', q.tier],
+     ['#fBody', q.body], ['#fTopic', q.topic], ['#fStatus', q.status]].forEach(([sel, val]) => {
+      const node = $(sel);
+      if (!node) return;
+      node.parentElement.classList.toggle('is-active', !!val);
+      const label = document.querySelector('label[for="' + node.id + '"]');
+      if (label) label.classList.toggle('is-active', !!val);
     });
+  }
+
+  function renderChips() {
+    const box = $('#chips');
+    box.innerHTML = '';
+    box.appendChild(el('span', 'chips__count',
+      '<b>' + state.total + '</b> ' + (state.total === 1 ? 'proceeding' : 'proceedings') + ' in view'));
+    activeFilters().forEach((pair) => box.appendChild(filterChip(pair)));
+    markActiveFields();
   }
 
   /* ------------------------------------------------------------
@@ -568,6 +614,7 @@
         b.addEventListener('click', () => {
           state.query.topic = state.query.topic === t.slug ? '' : t.slug;
           state.page = 1;
+          buildDropdowns();
           renderResults();
           renderTopics();
           $('#library').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -697,6 +744,11 @@
     $('#fCity').addEventListener('change', (e) => { state.query.city = e.target.value; rerender(); });
     $('#fTier').addEventListener('change', (e) => { state.query.tier = e.target.value; rerender(); });
     $('#fBody').addEventListener('change', (e) => { state.query.body = e.target.value; rerender(); });
+    if ($('#fTopic')) {
+      $('#fTopic').addEventListener('change', (e) => {
+        state.query.topic = e.target.value; rerender(); renderTopics();
+      });
+    }
     $('#fSort').addEventListener('change', (e) => {
       state.query.sort = e.target.value; state.page = 1; renderResults();
     });
