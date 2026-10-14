@@ -21,7 +21,7 @@
      server serves this page itself, the token is left alone and we simply
      use the same origin.
      ------------------------------------------------------------ */
-  const API_TOKEN = 'port/3000';
+  const API_TOKEN = '__PORT_3000__';
   const API_BASE = API_TOKEN.indexOf('__PORT') === 0 ? '' : API_TOKEN.replace(/\/+$/, '');
   const api = (path) => API_BASE + path;
 
