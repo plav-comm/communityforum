@@ -1,5 +1,5 @@
 /* ============================================================
-   COMMUNITY-SPAN — home page
+   TOWN HALL MEETINGS — home page
    Reads from the live API. Falls back to the bundled sample file
    (data.js) if the API cannot be reached, so the page never breaks.
    ============================================================ */
@@ -316,7 +316,7 @@
         '<h3>No meetings match all of these filters together</h3>' +
         '<p>' + (active.length > 1
           ? 'Filters combine, so a meeting has to match every one. Remove one to widen the results:'
-          : 'Community-Span is still onboarding municipal feeds. Remove the filter to see everything:') +
+          : 'Town Hall Meetings is still adding communities. Remove the filter to see everything:') +
         '</p>');
       if (active.length) {
         const chips = el('div', 'empty__chips');
@@ -768,7 +768,7 @@
     if (mode === 'api') {
       badge.textContent = 'Live data';
       badge.className = 'srcbadge srcbadge--live';
-      badge.title = 'Reading from the Community-Span ingestion database';
+      badge.title = 'Reading from the Town Hall Meetings database';
     } else {
       badge.textContent = 'Sample data';
       badge.className = 'srcbadge srcbadge--sample';

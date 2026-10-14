@@ -37,7 +37,7 @@ router.get('/health', async (req, res) => {
     const row = await one('SELECT now() AS db_time, count(*)::int AS videos FROM videos');
     res.json({
       ok: true,
-      service: 'community-span-api',
+      service: 'townhallmeetings-api',
       dbTime: row.db_time,
       videos: row.videos,
       uptimeSeconds: Math.round(process.uptime())

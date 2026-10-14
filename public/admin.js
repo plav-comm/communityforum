@@ -1,5 +1,5 @@
 /* ============================================================
-   Community-Span — newsroom console
+   Town Hall Meetings — newsroom console
    Add and manage towns without touching a terminal.
 
    Hybrid by design: the channel and the location are always yours to confirm,

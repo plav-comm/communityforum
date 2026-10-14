@@ -1,8 +1,8 @@
 {
-  "name": "community-span",
+  "name": "townhallmeetings",
   "version": "1.0.0",
   "private": true,
-  "description": "Community-Span — real-time aggregation and civic topic tagging of public municipal YouTube meeting streams.",
+  "description": "Town Hall Meetings — real-time aggregation and civic topic tagging of public municipal YouTube meeting streams.",
   "type": "commonjs",
   "engines": {
     "node": ">=20"

@@ -15,7 +15,7 @@
 const { extractPdfText } = require('./pdf');
 const log = require('../log');
 
-const UA = 'Community-Span/1.0 (civic meeting aggregator; +https://community-span.pplx.app)';
+const UA = 'TownHallMeetings/1.0 (civic meeting aggregator; +https://townhallmeetings.org)';
 const base = (clientCode) => `https://${encodeURIComponent(clientCode)}.primegov.com`;
 
 async function getJson(url, { timeout = 20000 } = {}) {

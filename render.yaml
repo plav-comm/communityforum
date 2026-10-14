@@ -1,5 +1,5 @@
 # ============================================================
-# Render blueprint for Community-Span.
+# Render blueprint for Town Hall Meetings (townhallmeetings.org).
 #
 # To use it: push this repo to GitHub, then in Render choose
 # "New +" -> "Blueprint" and point it at the repo. Render reads this
@@ -11,7 +11,7 @@
 # ============================================================
 services:
   - type: web
-    name: community-span
+    name: townhallmeetings
     runtime: node
     plan: starter                 # ~$7/mo, always on. 'free' spins down and
                                   # will miss push notifications while asleep.
@@ -27,7 +27,7 @@ services:
       - key: PUBLIC_BASE_URL
         fromService:
           type: web
-          name: community-span
+          name: townhallmeetings
           property: host          # Render fills in https://<host> for you
       - key: DATABASE_URL
         sync: false
@@ -41,7 +41,7 @@ services:
         sync: false
 
   - type: cron
-    name: community-span-daily
+    name: townhallmeetings-daily
     runtime: node
     plan: starter
     schedule: '0 8 * * *'         # 08:00 UTC daily = 4am ET / 1am PT
@@ -53,7 +53,7 @@ services:
       - key: PUBLIC_BASE_URL
         fromService:
           type: web
-          name: community-span
+          name: townhallmeetings
           property: host
       - key: DATABASE_URL
         sync: false
