@@ -27,7 +27,12 @@ const config = {
     // Google's public WebSub hub for YouTube feeds. Do not change.
     hubUrl: process.env.WEBSUB_HUB_URL || 'https://pubsubhubbub.appspot.com/subscribe',
     // The public HTTPS base URL of THIS server, e.g. https://townhallmeetings.org
-    callbackBase: (process.env.PUBLIC_BASE_URL || '').replace(/\/+$/, ''),
+    // Accepts 'townhallmeetings.org' or 'https://townhallmeetings.org/'.
+    callbackBase: (() => {
+      const raw = (process.env.PUBLIC_BASE_URL || '').trim().replace(/\/+$/, '');
+      if (!raw) return '';
+      return /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
+    })(),
     callbackPath: process.env.WEBSUB_CALLBACK_PATH || '/websub/youtube',
     // Shared secret used to sign push notifications. Any long random string.
     secret: process.env.WEBSUB_SECRET || '',
