@@ -1,4 +1,4 @@
-/* Community-Span — sample video library.
+/* Town Hall Meetings — sample video library.
    Every entry below is a REAL, publicly posted local government meeting video on YouTube.
    Location, governing body, date and runtime reflect the actual recording.
    Topic tags are illustrative editorial metadata for this prototype. */

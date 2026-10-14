@@ -948,7 +948,7 @@ async function main() {
   await test('the home page is served', async () => {
     const r = await get('/');
     assert.strictEqual(r.status, 200);
-    assert.match(r.text, /Community-Span/);
+    assert.match(r.text, /Town Hall Meetings/);
   });
 
   /* ---------------- results ---------------- */

@@ -1,5 +1,5 @@
 /**
- * Community-Span server entry point.
+ * Town Hall Meetings server entry point.
  *
  * Serves three things:
  *   /                the front-end site (public/)
@@ -90,7 +90,7 @@ async function start() {
   }
 
   const server = app.listen(config.port, () => {
-    log.info('community-span server listening', {
+    log.info('townhallmeetings server listening', {
       port: config.port,
       env: config.env,
       websubCallback: config.websub.callbackUrl || '(PUBLIC_BASE_URL not set)',

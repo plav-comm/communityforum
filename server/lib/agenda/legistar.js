@@ -16,7 +16,7 @@
  * at credentials.
  */
 const BASE = 'https://webapi.legistar.com/v1';
-const UA = 'Community-Span/1.0 (civic meeting aggregator; +https://community-span.pplx.app)';
+const UA = 'TownHallMeetings/1.0 (civic meeting aggregator; +https://townhallmeetings.org)';
 
 async function get(path, { timeout = 20000 } = {}) {
   const ctrl = new AbortController();

@@ -1,5 +1,5 @@
 /* ============================================================
-   Community-Span — newsroom console (add / manage towns)
+   Town Hall Meetings — newsroom console (add / manage towns)
    Reuses the site design tokens from styles.css.
    ============================================================ */
 .console { padding-block: var(--space-8) var(--space-20); display: grid; gap: var(--space-6); }

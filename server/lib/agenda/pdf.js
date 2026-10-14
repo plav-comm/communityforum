@@ -2,7 +2,7 @@
  * PDF text extraction for agenda documents.
  * Used by the PrimeGov adapter, which publishes agendas as PDFs rather than JSON.
  */
-const UA_DEFAULT = 'Community-Span/1.0 (civic meeting aggregator)';
+const UA_DEFAULT = 'TownHallMeetings/1.0 (civic meeting aggregator; +https://townhallmeetings.org)';
 const MAX_BYTES = 12 * 1024 * 1024;   // agendas are text; anything huge is a scan
 
 async function extractPdfText(url, { timeout = 30000, userAgent = UA_DEFAULT } = {}) {

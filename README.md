@@ -1,4 +1,4 @@
-# Community-Span — Backend & Ingestion Pipeline
+# Town Hall Meetings (townhallmeetings.org) — Backend & Ingestion Pipeline
 
 A content platform that watches the official YouTube channels of towns, cities,
 counties and school districts, notices within seconds when one of them uploads a
@@ -78,7 +78,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ### Step 2 — Create the database (10 min)
 
 1. Go to [supabase.com](https://supabase.com), sign up, click **New project**.
-2. Name it `community-span`. Choose a database password and **save it somewhere** —
+2. Name it `townhallmeetings`. Choose a database password and **save it somewhere** —
    you cannot see it again.
 3. Wait about two minutes while it provisions.
 4. Go to **Project Settings → Database → Connection string → URI**. Copy it.
