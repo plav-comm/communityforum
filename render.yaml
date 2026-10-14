@@ -15,7 +15,7 @@ services:
     runtime: node
     plan: starter                 # ~$7/mo, always on. 'free' spins down and
                                   # will miss push notifications while asleep.
-    buildCommand: npm ci
+    buildCommand: npm install --omit=dev
     startCommand: npm start
     healthCheckPath: /api/health
     autoDeploy: true
@@ -46,7 +46,7 @@ services:
     runtime: node
     plan: starter
     schedule: '0 8 * * *'         # 08:00 UTC daily = 4am ET / 1am PT
-    buildCommand: npm ci
+    buildCommand: npm install --omit=dev
     startCommand: npm run daily
     envVars:
       - key: NODE_ENV
