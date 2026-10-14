@@ -47,7 +47,10 @@ const config = {
     // How many recent uploads per channel the daily backfill checks.
     backfillPerChannel: int(process.env.BACKFILL_PER_CHANNEL, 10),
     // If a push arrives from a channel we do not know, add it automatically?
-    autoAddChannels: bool(process.env.AUTO_ADD_CHANNELS, false)
+    autoAddChannels: bool(process.env.AUTO_ADD_CHANNELS, false),
+    // Only import videos whose title looks like a public meeting. Keeps
+    // concerts, PSAs and Shorts from community-access channels off the site.
+    meetingsOnly: bool(process.env.MEETINGS_ONLY, true)
   },
 
   // Optional: a transcript provider. Left unset for launch — see server/lib/transcript.js
