@@ -904,6 +904,16 @@
       };
     }
 
+    // A town, state or meeting page (reached from search or a shared link)
+    // opens the library already filtered to that place.
+    const landing = window.__THM_BOOT__ || {};
+    if (landing.state && state.filters.states.some((x) => x.code === landing.state)) {
+      state.query.state = landing.state;
+      if (landing.city && state.filters.cities.some((c) => c.state === landing.state && c.name === landing.city)) {
+        state.query.city = landing.city;
+      }
+    }
+
     await loadTopics();
     buildDropdowns();
     bind();
@@ -913,7 +923,14 @@
     renderTopics();   // runs after renderStats so the coverage note has real numbers
 
     // Open on whatever is live, else the most recent proceeding.
-    const opener = state.items.find((v) => v.status === 'live') || state.items[0];
+    let opener = null;
+    if (landing.video) {
+      opener = state.items.find((v) => v.ytVideoId === landing.video) || null;
+      if (!opener && state.mode === 'api') {
+        try { opener = await getJson('/api/videos/' + encodeURIComponent(landing.video)); } catch (err) { /* fall through */ }
+      }
+    }
+    opener = opener || state.items.find((v) => v.status === 'live') || state.items[0];
     if (opener) play(opener, false);
   }
 

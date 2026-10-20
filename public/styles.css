@@ -866,3 +866,10 @@ h1, h2, h3, h4 { font-family: var(--font-display); margin: 0; line-height: 1.12;
   .grid { grid-template-columns: minmax(0, 1fr); }
   .premium-cta { display: none; }
 }
+
+/* Plain list a town / meeting page carries for search engines; the script
+   replaces it with the normal cards as soon as the page loads. */
+.seolist { grid-column: 1 / -1; color: var(--text-muted); font-size: var(--text-sm); line-height: 1.6; }
+.seolist h1, .seolist h2 { color: var(--text); font-size: var(--text-lg); margin: 0 0 var(--space-2); }
+.seolist ul { padding-left: 1.2em; margin: var(--space-3) 0 var(--space-6); }
+.seolist a { color: var(--primary); }
