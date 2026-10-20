@@ -729,10 +729,10 @@
     };
 
     $('#stats').innerHTML = [
-      [String(s.videos), 'Proceedings archived'],
-      [String(s.states), 'States represented'],
-      [String(s.municipalities), 'Communities covered'],
-      [s.archive_hours + '+', 'Hours of unedited record']
+      [String(s.videos || 0), 'Proceedings archived'],
+      [String(s.states || 0), 'States represented'],
+      [String(s.municipalities || 0), 'Communities covered'],
+      [(s.archive_hours || 0) + '+', 'Hours of unedited record']
     ].map((d) => '<div class="stat"><div class="stat__v">' + d[0] +
       '</div><div class="stat__k">' + d[1] + '</div></div>').join('');
 
@@ -857,9 +857,11 @@
       });
     });
 
-    $('#premiumBtn').addEventListener('click', () => {
-      document.querySelector('.footer').scrollIntoView({ behavior: 'smooth' });
-    });
+    if ($('#premiumBtn')) {
+      $('#premiumBtn').addEventListener('click', () => {
+        document.querySelector('.footer').scrollIntoView({ behavior: 'smooth' });
+      });
+    }
   }
 
   /* ------------------------------------------------------------

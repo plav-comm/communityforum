@@ -774,6 +774,8 @@ h1, h2, h3, h4 { font-family: var(--font-display); margin: 0; line-height: 1.12;
 .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--border);
   border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
 .stat { background: var(--surface); padding: var(--space-5); }
+.stats--wide { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 720px) { .stats.stats--wide { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .stat__v {
   font-family: var(--font-display); font-weight: 800; font-size: var(--text-xl);
   letter-spacing: -0.03em; color: var(--primary); line-height: 1;
@@ -803,7 +805,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); margin: 0; line-height: 1.12;
 }
 
 .footer { background: #04101f; color: #93a8c4; padding-block: var(--space-10) var(--space-6); font-size: var(--text-sm); }
-.footer__grid { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: var(--space-8); }
+.footer__grid { display: grid; grid-template-columns: 1.4fr repeat(2, 1fr); gap: var(--space-8); }
 .footer h4 {
   font-size: var(--text-xs); letter-spacing: 0.14em; text-transform: uppercase;
   color: #fff; margin-bottom: var(--space-3); font-weight: 700;
