@@ -66,6 +66,9 @@ app.use(express.static(path.join(__dirname, '..', 'public'), {
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 
+/* ---------------- search-engine pages (sitemap, robots, town & meeting pages) ---------------- */
+app.use(require('./routes/seo'));
+
 /* ---------------- errors ---------------- */
 app.use((req, res) => res.status(404).json({ error: 'not found', path: req.path }));
 
