@@ -140,7 +140,8 @@ async function runDaily({ skipBackfill = false } = {}) {
     try {
       const { syncAllAgendas, matchAndReclassify } = require('./agenda');
       details.agendaSync = await syncAllAgendas({ limit: 25 });
-      details.agendaMatch = await matchAndReclassify({ limit: 400 });
+      // Works through not-yet-matched meetings, newest first, a batch a day.
+      details.agendaMatch = await matchAndReclassify({ limit: 400, onlyUnmatched: true });
     } catch (err) {
       details.agendaError = err.message;
       log.warn('agenda stage failed but the rest of the job succeeded', { err: err.message });

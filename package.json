@@ -20,6 +20,7 @@
     "test": "node test/run.js",
     "discover": "node scripts/discover-agenda-sources.js",
     "agendas": "node scripts/sync-agendas.js",
+    "find-agendas": "node scripts/find-agendas.js",
     "restore-demo": "node scripts/restore-demo.js",
     "check-channels": "node scripts/check-channels.js",
     "hide-non-meetings": "node scripts/hide-non-meetings.js"
