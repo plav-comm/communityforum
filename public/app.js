@@ -621,12 +621,17 @@
      ------------------------------------------------------------ */
   function renderTopics() {
     const box = $('#topicGrid');
+    const nbox = $('#nationalGrid');
     box.innerHTML = '';
+    if (nbox) nbox.innerHTML = '';
     // Show every browsable topic, including ones with no coverage yet. Hiding
     // the empties would misrepresent how much of the agenda we can actually
     // characterise from what towns publish.
     const list = state.topics.filter((t) => t.show_in_trending !== false);
     if (!list.length) return;
+    // National issues get their own row, so they read as a separate lens.
+    const isNational = (t) => t.topic_group === 'national';
+    if ($('#nationalBlock')) $('#nationalBlock').hidden = !(nbox && list.some(isNational));
     list.forEach((t) => {
       const empty = !t.video_count;
       const b = el('button', 'tpill' + (empty ? ' tpill--empty' : ''));
@@ -648,7 +653,7 @@
           renderTopics();
         });
       }
-      box.appendChild(b);
+      (isNational(t) && nbox ? nbox : box).appendChild(b);
     });
 
     // Say plainly how much of the library carries a specific subject tag.
