@@ -295,7 +295,13 @@ async function matchVideo(video) {
  * Match videos to agendas and reclassify them with the agenda text included.
  * This is what actually moves topic coverage.
  */
-async function matchAndReclassify({ limit = 200, onlyUnmatched = false } = {}) {
+async function matchAndReclassify({ limit = 200, onlyUnmatched = false, channelIds = null } = {}) {
+  const params = [limit];
+  let channelSql = '';
+  if (Array.isArray(channelIds) && channelIds.length) {
+    params.push(channelIds);
+    channelSql = `AND v.channel_id = ANY($${params.length}::int[])`;
+  }
   const rows = await many(
     `SELECT v.id, v.yt_video_id, v.channel_id, v.title, v.description, v.raw,
             v.published_at, v.scheduled_start_at, v.actual_start_at,
@@ -304,10 +310,14 @@ async function matchAndReclassify({ limit = 200, onlyUnmatched = false } = {}) {
        JOIN channels c ON c.id = v.channel_id
       WHERE NOT v.is_hidden
         AND c.agenda_vendor IS NOT NULL
-        ${onlyUnmatched ? 'AND v.agenda_meeting_id IS NULL' : ''}
+        ${channelSql}
+        ${onlyUnmatched
+          ? `AND v.agenda_meeting_id IS NULL
+             AND (v.agenda_tried_at IS NULL OR v.agenda_tried_at < now() - interval '7 days')`
+          : ''}
       ORDER BY v.published_at DESC NULLS LAST
       LIMIT $1`,
-    [limit]
+    params
   );
 
   const rules = await loadRules({ force: true });
@@ -333,6 +343,7 @@ async function matchAndReclassify({ limit = 200, onlyUnmatched = false } = {}) {
 
     if (!meeting) {
       out.unmatched += 1;
+      await query('UPDATE videos SET agenda_tried_at = now() WHERE id = $1', [v.id]).catch(() => {});
       continue;
     }
 
@@ -348,7 +359,7 @@ async function matchAndReclassify({ limit = 200, onlyUnmatched = false } = {}) {
 
     await tx(async (client) => {
       await client.query(
-        'UPDATE videos SET agenda_meeting_id = $2, agenda_matched_at = now() WHERE id = $1',
+        'UPDATE videos SET agenda_meeting_id = $2, agenda_matched_at = now(), agenda_tried_at = now() WHERE id = $1',
         [v.id, meeting.id]
       );
       await client.query('DELETE FROM video_topics WHERE video_id = $1', [v.id]);
