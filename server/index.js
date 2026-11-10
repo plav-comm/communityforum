@@ -11,6 +11,9 @@ const express = require('express');
 const { config, assertConfig } = require('./config');
 const log = require('./lib/log');
 const db = require('./db');
+const { runMigrations } = require('./lib/migrations');
+const { reclassifyAll } = require('./pipeline/ingest');
+const { clearCache } = require('./pipeline/classify');
 
 const app = express();
 app.set('trust proxy', 1);          // Render/Railway/Fly all sit behind a proxy
@@ -90,6 +93,23 @@ async function start() {
   } catch (err) {
     log.error('cannot reach the database — check DATABASE_URL', { err: err.message });
     process.exit(1);
+  }
+
+  // Apply any new database migrations that came with this deploy. A failure is
+  // logged loudly but does not stop the site: it keeps serving what it has.
+  try {
+    const { ran } = await runMigrations();
+    if (ran.length) {
+      log.info('applied database migrations', { files: ran.join(', ') });
+      // New topics or keyword rules only reach existing meetings once they are
+      // re-tagged. Runs in the background so the site starts immediately.
+      clearCache();
+      reclassifyAll({ limit: 20000 })
+        .then((r) => log.info('re-tagged existing meetings after migration', r))
+        .catch((e) => log.error('re-tagging after migration failed', { err: e.message }));
+    }
+  } catch (err) {
+    log.error('database migration failed — site is running on the previous schema', { err: err.message });
   }
 
   const server = app.listen(config.port, () => {

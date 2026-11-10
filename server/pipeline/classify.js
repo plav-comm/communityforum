@@ -30,6 +30,7 @@ let hintCache = null;
 let cacheLoadedAt = 0;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const FALLBACK_SLUG = 'general-session';
+const MAX_NATIONAL = 3;
 
 /** True when this governing body has tagging hints configured. */
 function hasBodyHint(govBody) {
@@ -53,7 +54,8 @@ function escapeRegex(s) {
 async function loadRules({ force = false } = {}) {
   if (!force && cache && Date.now() - cacheLoadedAt < CACHE_TTL_MS) return cache;
   const rows = await many(
-    `SELECT t.id AS topic_id, t.slug, t.label, t.is_fallback, r.term, r.weight
+    `SELECT t.id AS topic_id, t.slug, t.label, t.is_fallback, r.term, r.weight,
+            COALESCE(to_jsonb(t)->>'topic_group', 'local') AS topic_group
        FROM topic_rules r
        JOIN topics t ON t.id = r.topic_id
       WHERE r.is_active AND t.is_active`
@@ -63,7 +65,7 @@ async function loadRules({ force = false } = {}) {
     if (!byTopic.has(row.slug)) {
       byTopic.set(row.slug, {
         topicId: row.topic_id, slug: row.slug, label: row.label,
-        isFallback: row.is_fallback === true, terms: []
+        isFallback: row.is_fallback === true, group: row.topic_group || 'local', terms: []
       });
     }
     byTopic.get(row.slug).terms.push({
@@ -168,6 +170,7 @@ async function classify(video, { rules } = {}) {
         topicId: topic.topicId,
         slug: topic.slug,
         label: topic.label,
+        group: topic.group,
         score: Math.round(score * 100) / 100,
         matchedTerms: [...matched],
         source
@@ -197,14 +200,23 @@ async function classify(video, { rules } = {}) {
   }
 
   results.sort((a, b) => b.score - a.score);
-  const kept = results
+
+  // National issues (data centers, book challenges ...) are their own group:
+  // they need a clear mention to qualify, and they never use up the ordinary
+  // topic slots or stand in for General Session.
+  const national = results
+    .filter((r) => r.group === 'national' && r.score >= config.ingest.topicThreshold)
+    .slice(0, MAX_NATIONAL);
+  const local = results.filter((r) => r.group !== 'national');
+
+  const kept = local
     .filter((r) => r.score >= config.ingest.topicThreshold)
     .slice(0, config.ingest.maxTopicsPerVideo);
 
   // Nothing cleared the bar. Keep the strongest real signal if it is at least
   // marginally meaningful — a weak real topic is more useful to a viewer than
   // dumping the meeting into the fallback bucket.
-  if (!kept.length && results.length && results[0].score >= 1.0) kept.push(results[0]);
+  if (!kept.length && local.length && local[0].score >= 1.0) kept.push(local[0]);
 
   // Nothing at all matched (a bare title like "8/12/26", or a description that
   // is pure boilerplate): file it under the fallback topic so it stays
@@ -220,7 +232,7 @@ async function classify(video, { rules } = {}) {
     }
   }
 
-  return kept;
+  return kept.concat(national);
 }
 
 module.exports = { classify, loadRules, clearCache, normBody, hasBodyHint };

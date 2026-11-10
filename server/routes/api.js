@@ -51,13 +51,13 @@ router.get('/health', async (req, res) => {
 router.get('/topics', async (req, res, next) => {
   try {
     const rows = await many(
-      `SELECT t.slug, t.label, t.description, t.sort_order, t.show_in_trending,
+      `SELECT t.slug, t.label, t.description, t.sort_order, t.show_in_trending, t.topic_group,
               count(vt.video_id)::int AS video_count
          FROM topics t
          LEFT JOIN video_topics vt ON vt.topic_id = t.id
          LEFT JOIN videos v ON v.id = vt.video_id AND NOT v.is_hidden
         WHERE t.is_active
-        GROUP BY t.id, t.slug, t.label, t.description, t.sort_order, t.show_in_trending
+        GROUP BY t.id, t.slug, t.label, t.description, t.sort_order, t.show_in_trending, t.topic_group
         ORDER BY count(vt.video_id) DESC, t.sort_order`
     );
     res.json({ topics: rows });
