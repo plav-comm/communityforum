@@ -96,7 +96,11 @@
     }).then(function (res) {
       return res.json().catch(function () { return {}; }).then(function (d) {
         msg.textContent = d.message || (res.ok ? 'Thanks!' : 'Something went wrong. Please try again.');
-        if (!res.ok || d.ok === false) msg.className = 'msg is-err'; else document.getElementById('nlEmail').value = '';
+        if (!res.ok || d.ok === false) msg.className = 'msg is-err';
+        else {
+          document.getElementById('nlEmail').value = '';
+          try { if (window.gtag) window.gtag('event', 'sign_up', { method: 'newsletter', location: 'newsletter_page' }); } catch (e) {}
+        }
       });
     }).catch(function () {
       msg.className = 'msg is-err'; msg.textContent = 'Could not reach the server. Please try again.';
