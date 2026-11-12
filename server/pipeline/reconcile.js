@@ -146,6 +146,14 @@ async function runDaily({ skipBackfill = false } = {}) {
       details.agendaError = err.message;
       log.warn('agenda stage failed but the rest of the job succeeded', { err: err.message });
     }
+    // Newsletter: on Mondays, save the week's issue to Buttondown as a draft.
+    // Wrapped like agendas, so an email-service hiccup never fails the job.
+    try {
+      details.newsletter = await require('./newsletter').maybeDraftWeekly();
+    } catch (err) {
+      details.newsletter = { error: err.message };
+      log.warn('newsletter draft failed but the rest of the job succeeded', { err: err.message });
+    }
     details.youtubeQuotaUnitsUsed = youtube.quotaUsed();
 
     await query(

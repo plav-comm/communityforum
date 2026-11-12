@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- Google tag for townhallmeetings.org (GTM-TJ4KNCM8), as provided by Google -->
+<script async src="https://www.googletagmanager.com/gtm.js?id=GTM-TJ4KNCM8"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+</script>
+<title>The Weekly Rundown — Town Hall Meetings</title>
+<meta name="description" content="A free weekly email: the week's local government meetings from across the country, in plain headlines with links to watch. No commentary." />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="styles.css" />
+<link rel="canonical" href="https://townhallmeetings.org/newsletter.html" />
+<meta property="og:title" content="The Weekly Rundown — Town Hall Meetings" />
+<meta property="og:description" content="Every local meeting worth a look, in one plain weekly email." />
+<meta property="og:image" content="https://townhallmeetings.org/og.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<style>
+  .policy-top { background: var(--chrome-bg); border-bottom: 3px solid var(--live); }
+  .policy-top .wrap { display: flex; align-items: center; min-height: 64px; }
+  .policy-top a { color: var(--chrome-text); text-decoration: none; }
+  .nl { max-width: 62ch; margin-inline: auto; padding: var(--space-12) var(--space-5) var(--space-16); }
+  .nl h1 { font-size: var(--text-2xl, 2rem); font-weight: 800; line-height: 1.1; margin-bottom: var(--space-3); }
+  .nl .lede { font-size: var(--text-lg); color: var(--text-muted); line-height: 1.55; margin-bottom: var(--space-8); }
+  .nl form { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+  .nl input[type=email] { flex: 1 1 260px; min-width: 0; padding: 12px 14px; font: inherit; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); }
+  .nl button { padding: 12px 20px; border: 0; border-radius: 8px; background: var(--live); color: #fff; font-family: var(--font-display); font-weight: 700; cursor: pointer; }
+  .nl button:disabled { opacity: .6; cursor: wait; }
+  .nl .msg { min-height: 1.5em; margin-top: var(--space-3); }
+  .nl .msg.is-err { color: var(--live); }
+  .nl h2 { font-size: var(--text-lg); font-weight: 800; margin: var(--space-10) 0 var(--space-3); }
+  .nl ul { padding-left: 1.2em; line-height: 1.7; }
+  .nl .sample { font-family: Georgia, serif; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: var(--space-5); line-height: 1.6; }
+  .nl .sample b { font-family: Arial, sans-serif; }
+  .nl .fine { color: var(--text-muted); font-size: var(--text-sm); margin-top: var(--space-8); }
+  .nl a { color: var(--primary); }
+  .hp { position: absolute !important; left: -9999px !important; width: 1px; height: 1px; opacity: 0; }
+</style>
+</head>
+<body>
+
+<header class="policy-top">
+  <div class="wrap">
+    <a href="/" aria-label="Town Hall Meetings home"><span class="brand__name">TOWN HALL <em>MEETINGS</em></span></a>
+  </div>
+</header>
+
+<main class="nl">
+  <h1>The Weekly Rundown</h1>
+  <p class="lede">Every Monday: the past week's city council, county board and school board meetings from across the
+  country, in plain headlines with a link to watch each one. Free. No commentary.</p>
+
+  <form id="nlForm" novalidate>
+    <input type="email" id="nlEmail" name="email" placeholder="you@example.com" autocomplete="email" required aria-label="Email address" />
+    <input type="text" name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true" />
+    <button type="submit">Subscribe</button>
+  </form>
+  <p class="msg" id="nlMsg" aria-live="polite"></p>
+
+  <h2>What's in it</h2>
+  <ul>
+    <li><strong>National issues, local votes:</strong> data centers, housing and zoning reform, solar and wind siting, school book policies, policing and homelessness.</li>
+    <li><strong>On the agenda:</strong> what the biggest cities and counties took up this week.</li>
+    <li><strong>By topic:</strong> budgets, zoning, public safety and more, with the towns behind each.</li>
+    <li><strong>Live and coming up</strong>, the <strong>marathon meeting</strong> of the week, and towns new to the site.</li>
+  </ul>
+
+  <h2>A taste</h2>
+  <div class="sample">
+    <b>▶ NATIONAL ISSUES, LOCAL VOTES</b><br>
+    <b>DATA CENTERS</b><br>
+    • <u>EXAMPLE COUNTY, VA BOARD OF SUPERVISORS: ZONING &amp; HOUSING</u> — Tue 11/10 · 4h 12m<br>
+    <b>BUDGET &amp; TAXES</b> (24) — <u>Sample City, OH</u> · <u>Anytown, TX</u> · <u>Riverside County, CA</u> +18 more
+  </div>
+
+  <p class="fine">Confirm your address from the email we send, and you're in. Unsubscribe any time with one click.
+  We never share your address. See our <a href="/privacy.html">Privacy Policy</a>.</p>
+  <p class="fine"><a href="/">← Back to Town Hall Meetings</a></p>
+</main>
+
+<script>
+(function () {
+  var form = document.getElementById('nlForm');
+  var msg = document.getElementById('nlMsg');
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var btn = form.querySelector('button');
+    btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Signing you up…';
+    fetch('/api/subscribe', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: document.getElementById('nlEmail').value, website: form.website.value })
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (d) {
+        msg.textContent = d.message || (res.ok ? 'Thanks!' : 'Something went wrong. Please try again.');
+        if (!res.ok || d.ok === false) msg.className = 'msg is-err'; else document.getElementById('nlEmail').value = '';
+      });
+    }).catch(function () {
+      msg.className = 'msg is-err'; msg.textContent = 'Could not reach the server. Please try again.';
+    }).then(function () { btn.disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>

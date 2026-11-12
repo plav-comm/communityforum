@@ -331,6 +331,50 @@ router.get('/stats', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+/* ---------------- newsletter signup ----------------
+   Hands the address to Buttondown, which emails a confirmation link first
+   (double opt-in), so a typo or a stranger's address never ends up on the list.
+   A hidden "website" field catches simple bots; a small per-address limit
+   catches the rest.
+   ------------------------------------------------------------------- */
+const signupHits = new Map();
+router.post('/subscribe', async (req, res) => {
+  const { email, website } = req.body || {};
+  if (website) return res.json({ ok: true });            // bot filled the hidden field
+  const addr = String(email || '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(addr) || addr.length > 254) {
+    return res.status(400).json({ ok: false, message: 'That doesn\u2019t look like an email address.' });
+  }
+  const ip = req.ip || '';
+  const now = Date.now();
+  const recent = (signupHits.get(ip) || []).filter((t) => now - t < 3600e3);
+  if (recent.length >= 5) {
+    return res.status(429).json({ ok: false, message: 'Too many tries. Please wait a little and try again.' });
+  }
+  recent.push(now);
+  signupHits.set(ip, recent);
+  if (signupHits.size > 5000) signupHits.clear();
+
+  const buttondown = require('../lib/buttondown');
+  if (!buttondown.isConfigured()) {
+    return res.status(503).json({ ok: false, message: 'Signups open soon. Please check back.' });
+  }
+  try {
+    await buttondown.addSubscriber({ email: addr, ip, referrer: req.get('referer') || undefined });
+    res.json({ ok: true, message: 'Almost done: check your inbox and click the confirmation link.' });
+  } catch (err) {
+    const body = JSON.stringify(err.body || '').toLowerCase();
+    if (err.status === 400 && /already|exists|duplicate/.test(body)) {
+      return res.json({ ok: true, message: 'You\u2019re already on the list. Thanks!' });
+    }
+    if (err.status === 400) {
+      return res.status(400).json({ ok: false, message: 'That address couldn\u2019t be added. Please check it and try again.' });
+    }
+    log.error('newsletter signup failed', { err: err.message });
+    res.status(502).json({ ok: false, message: 'Something went wrong on our side. Please try again later.' });
+  }
+});
+
 /** Consistent camelCase shape so the front end never deals with SQL column names. */
 function shapeVideo(r) {
   return {
