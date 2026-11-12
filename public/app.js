@@ -939,5 +939,36 @@
     if (opener) play(opener, false);
   }
 
+  /* ------------------------------------------------------------
+     Newsletter signup (footer)
+     ------------------------------------------------------------ */
+  const signup = $('#footSignup');
+  if (signup) {
+    signup.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = $('#footSignupMsg');
+      const btn = signup.querySelector('button');
+      btn.disabled = true;
+      msg.className = 'footer__signupmsg';
+      msg.textContent = 'Signing you up…';
+      try {
+        const res = await fetch(api('/api/subscribe'), {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ email: $('#footEmail').value, website: signup.website.value })
+        });
+        const data = await res.json().catch(() => ({}));
+        msg.textContent = data.message || (res.ok ? 'Thanks!' : 'Something went wrong. Please try again.');
+        if (!res.ok || data.ok === false) msg.classList.add('is-err');
+        else $('#footEmail').value = '';
+      } catch (err) {
+        msg.textContent = 'Could not reach the server. Please try again.';
+        msg.classList.add('is-err');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
   boot();
 })();

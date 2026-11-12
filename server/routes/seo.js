@@ -158,7 +158,7 @@ router.get('/sitemap.xml', async (req, res, next) => {
       (last ? `<lastmod>${new Date(last).toISOString().slice(0, 10)}</lastmod>` : '') + '</url>';
     const xml = ['<?xml version="1.0" encoding="UTF-8"?>',
       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-      u('/', latest), u('/privacy.html')]
+      u('/', latest), u('/newsletter.html'), u('/privacy.html')]
       .concat([...states].map(([code, last]) => u('/' + code.toLowerCase(), last)))
       .concat(towns.map((t) => u(townPath(t.state_code, t.municipality), t.last)))
       .concat(vids.map((v) => u('/meeting/' + v.yt_video_id, v.published_at)))

@@ -336,6 +336,58 @@ router.post('/channels/:ytChannelId/agenda-source', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+/* ---------------- newsletter ---------------- */
+router.get('/newsletter/settings', async (req, res, next) => {
+  try {
+    const row = await one('SELECT featured_towns, updated_at FROM newsletter_settings WHERE id = 1');
+    const issues = await many(
+      'SELECT issue_key, subject, meetings, status, error, created_at FROM newsletter_issues ORDER BY created_at DESC LIMIT 8');
+    res.json({
+      featuredTowns: (row && row.featured_towns) || [],
+      buttondownConfigured: require('../lib/buttondown').isConfigured(),
+      issues
+    });
+  } catch (err) { next(err); }
+});
+
+router.post('/newsletter/settings', async (req, res, next) => {
+  try {
+    const { parseTown } = require('../pipeline/newsletter');
+    const raw = [].concat((req.body && req.body.featuredTowns) || []);
+    const good = [];
+    const bad = [];
+    raw.map((s) => String(s).trim()).filter(Boolean).forEach((s) => {
+      const t = parseTown(s);
+      t ? good.push(t.label) : bad.push(s);
+    });
+    await query(
+      `INSERT INTO newsletter_settings (id, featured_towns, updated_at) VALUES (1, $1, now())
+       ON CONFLICT (id) DO UPDATE SET featured_towns = EXCLUDED.featured_towns, updated_at = now()`,
+      [[...new Set(good)]]);
+    res.json({ featuredTowns: [...new Set(good)], rejected: bad });
+  } catch (err) { next(err); }
+});
+
+/** This week's issue as it would be drafted right now. */
+router.get('/newsletter/preview', async (req, res, next) => {
+  try {
+    const { buildIssue, toHtml } = require('../pipeline/newsletter');
+    const issue = await buildIssue();
+    res.json({ subject: issue.subject, meetings: issue.meetings, markdown: issue.body, html: toHtml(issue.body) });
+  } catch (err) { next(err); }
+});
+
+/** Save this week's issue to Buttondown as a draft now (does not send). */
+router.post('/newsletter/draft', async (req, res, next) => {
+  try {
+    const { createDraft } = require('../pipeline/newsletter');
+    res.json(await createDraft({ force: true }));
+  } catch (err) {
+    if (err.code === 'NO_KEY') return res.status(400).json({ error: 'BUTTONDOWN_API_KEY is not set on the server yet' });
+    next(err);
+  }
+});
+
 /** Sync agendas and re-tag. Safe to call any time. */
 router.post('/agendas/sync', async (req, res, next) => {
   try {

@@ -106,8 +106,9 @@
       $('#authNote').className = 'note note--ok';
       $('#authNote').textContent =
         'Connected. ' + health.videos + ' meetings on file.';
-      ['#addPanel', '#bulkPanel', '#listPanel'].forEach((s) => { $(s).hidden = false; });
+      ['#addPanel', '#bulkPanel', '#newsPanel', '#listPanel'].forEach((s) => { $(s).hidden = false; });
       await loadChannels();
+      loadNewsletter();
     } catch (err) {
       $('#authBadge').textContent = 'Not connected';
       $('#authBadge').className = 'srcbadge srcbadge--sample';
@@ -450,4 +451,73 @@
   }
 
   init();
+
+  /* ------------------------------------------------------------
+     Newsletter
+     ------------------------------------------------------------ */
+  async function loadNewsletter() {
+    try {
+      const d = await call('/admin/newsletter/settings');
+      $('#newsTowns').value = (d.featuredTowns || []).join('\n');
+      const last = (d.issues || [])[0];
+      const bits = [];
+      bits.push(d.buttondownConfigured ? 'Buttondown is connected.' : 'Buttondown is NOT connected yet: add BUTTONDOWN_API_KEY in Render.');
+      if (last) bits.push('Last issue: ' + last.issue_key + ' (' + last.status + (last.error ? ': ' + last.error : '') + ').');
+      $('#newsStatus').textContent = 'Every Monday morning the issue is built from the past week and saved to Buttondown as a draft. ' + bits.join(' ');
+    } catch (err) {
+      showResult('#newsResult', false, esc(err.message));
+    }
+  }
+
+  async function saveNewsletterTowns() {
+    busy($('#newsSaveBtn'), true);
+    try {
+      const towns = $('#newsTowns').value.split('\n').map((s) => s.trim()).filter(Boolean);
+      const d = await call('/admin/newsletter/settings', { method: 'POST', body: { featuredTowns: towns } });
+      $('#newsTowns').value = d.featuredTowns.join('\n');
+      showResult('#newsResult', !d.rejected.length,
+        'Saved ' + d.featuredTowns.length + ' featured towns.' +
+        (d.rejected.length ? ' Not understood (use Town, ST): ' + esc(d.rejected.join('; ')) : ''));
+    } catch (err) {
+      showResult('#newsResult', false, esc(err.message));
+    } finally {
+      busy($('#newsSaveBtn'), false);
+    }
+  }
+
+  async function previewNewsletter() {
+    busy($('#newsPreviewBtn'), true);
+    const win = window.open('', '_blank');
+    try {
+      const d = await call('/admin/newsletter/preview', { timeout: 60000 });
+      const html = d.html.replace('<body>', '<body><p style="font:13px Arial;color:#555;border-bottom:1px solid #ddd;padding-bottom:8px">' +
+        'PREVIEW · Subject: <b>' + esc(d.subject) + '</b> · ' + d.meetings + ' meetings</p>');
+      if (win) { win.document.open(); win.document.write(html); win.document.close(); }
+      else showResult('#newsResult', false, 'Your browser blocked the preview window. Allow pop-ups for this page and try again.');
+    } catch (err) {
+      if (win) win.close();
+      showResult('#newsResult', false, esc(err.message));
+    } finally {
+      busy($('#newsPreviewBtn'), false);
+    }
+  }
+
+  async function draftNewsletter() {
+    busy($('#newsDraftBtn'), true);
+    try {
+      const d = await call('/admin/newsletter/draft', { method: 'POST', timeout: 60000 });
+      showResult('#newsResult', !!d.drafted, d.drafted
+        ? 'Saved to Buttondown as a draft: <b>' + esc(d.subject) + '</b>. Open Buttondown → Emails → Drafts to review and send.'
+        : 'Not drafted: ' + esc(d.why || 'unknown reason'));
+      loadNewsletter();
+    } catch (err) {
+      showResult('#newsResult', false, esc(err.message));
+    } finally {
+      busy($('#newsDraftBtn'), false);
+    }
+  }
+
+  $('#newsSaveBtn').addEventListener('click', saveNewsletterTowns);
+  $('#newsPreviewBtn').addEventListener('click', previewNewsletter);
+  $('#newsDraftBtn').addEventListener('click', draftNewsletter);
 })();

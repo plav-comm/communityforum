@@ -64,6 +64,10 @@ const config = {
   // Protects the admin/maintenance routes. Any long random string.
   adminToken: process.env.ADMIN_TOKEN || '',
 
+  // Newsletter service (Buttondown -> Settings -> API). Optional: without it
+  // the newsletter is simply not drafted and the signup form says so politely.
+  buttondownApiKey: (process.env.BUTTONDOWN_API_KEY || '').trim(),
+
   cors: {
     // Comma-separated list of allowed browser origins, or * for any.
     origins: (process.env.CORS_ORIGINS || '*').split(',').map((s) => s.trim()).filter(Boolean)

@@ -216,6 +216,29 @@ https://www.youtube.com/@DenverCityCouncil, Denver, Denver County, CO, Colorado,
     <div id="bulkResult"></div>
   </section>
 
+  <!-- ============ NEWSLETTER ============ -->
+  <section class="panel" id="newsPanel" hidden>
+    <div class="panel__head">
+      <div>
+        <div class="section__eyebrow">Newsletter</div>
+        <h2 class="panel__title">The Weekly Rundown</h2>
+        <p class="panel__sub" id="newsStatus">Every Monday morning the issue is built from the past week's meetings and saved to Buttondown as a draft. Nothing is sent until you press send in Buttondown.</p>
+      </div>
+      <div class="panel__actions">
+        <button class="btn btn--outline btn--sm" type="button" id="newsPreviewBtn">Preview this week</button>
+        <button class="btn btn--outline btn--sm" type="button" id="newsDraftBtn">Save draft to Buttondown now</button>
+      </div>
+    </div>
+    <label class="field__label" for="newsTowns">Featured towns: always get top billing when they met that week. One per line, as Town, ST.</label>
+    <textarea class="input input--area" id="newsTowns" rows="6" placeholder="Akron, OH
+Tampa, FL
+Phoenix, AZ"></textarea>
+    <div class="panel__foot">
+      <button class="btn btn--outline" type="button" id="newsSaveBtn">Save featured towns</button>
+    </div>
+    <div id="newsResult"></div>
+  </section>
+
   <!-- ============ MONITORED ============ -->
   <section class="panel" id="listPanel" hidden>
     <div class="panel__head">
