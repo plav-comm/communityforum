@@ -62,6 +62,30 @@
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   /* ------------------------------------------------------------
+     Analytics: named events for Google Analytics.
+     Every call is optional — if the tag is blocked or missing, nothing breaks.
+     ------------------------------------------------------------ */
+  const clip = (x, n) => String(x == null ? '' : x).slice(0, n || 100);
+  function track(name, params) {
+    try {
+      if (typeof window.gtag === 'function') window.gtag('event', name, params || {});
+    } catch (err) { /* never let analytics break the page */ }
+  }
+  function meetingParams(v) {
+    const p = v.place || {};
+    const tags = (v.topics || []).filter((t) => t.slug !== 'general-session');
+    return {
+      meeting_id: v.ytVideoId,
+      meeting_title: clip(v.title),
+      town: clip((p.municipality || '') + ', ' + (p.stateCode || '')),
+      state: p.stateCode || '',
+      gov_body: clip(v.govBody),
+      topics: clip(tags.map((t) => t.label).join(', ')) || 'General Session',
+      meeting_status: v.status || 'recorded'
+    };
+  }
+
+  /* ------------------------------------------------------------
      State
      ------------------------------------------------------------ */
   const state = {
@@ -261,7 +285,8 @@
       '</span></div>' +
       '</div>';
 
-    card.addEventListener('click', () => play(v, true));
+    card.addEventListener('click', () =>
+      play(v, true, card.closest('#results') ? 'library' : 'new_this_week'));
     return card;
   }
 
@@ -325,7 +350,7 @@
       }
       const reset = el('button', 'btn', 'Clear all filters');
       reset.type = 'button';
-      reset.addEventListener('click', resetAll);
+      reset.addEventListener('click', () => { track('clear_filters', { location: 'no_results' }); resetAll(); });
       empty.appendChild(reset);
       box.appendChild(empty);
       $('#moreWrap').hidden = true;
@@ -384,7 +409,7 @@
     const chip = el('button', 'chip', esc(pair[1]) + ' <span aria-hidden="true">×</span>');
     chip.type = 'button';
     chip.setAttribute('aria-label', 'Remove filter ' + pair[1]);
-    chip.addEventListener('click', () => removeFilter(pair[0]));
+    chip.addEventListener('click', () => { track('remove_filter', { filter_name: pair[0] }); removeFilter(pair[0]); });
     return chip;
   }
 
@@ -429,7 +454,7 @@
       box.appendChild(list);
       const clear = el('button', 'libstatus__clear', 'Clear all');
       clear.type = 'button';
-      clear.addEventListener('click', resetAll);
+      clear.addEventListener('click', () => { track('clear_filters', { location: 'status_line' }); resetAll(); });
       box.appendChild(clear);
     }
 
@@ -445,8 +470,11 @@
   /* ------------------------------------------------------------
      Player
      ------------------------------------------------------------ */
-  function play(v, scroll) {
+  function play(v, scroll, source) {
     state.current = v;
+    state.currentSource = source || 'homepage_player';
+    // Only count it as a choice when a person picked it, not the page opener.
+    if (source && source !== 'homepage_player' && source !== 'meeting_link') track('meeting_select', Object.assign(meetingParams(v), { source: source }));
     const videoId = v.ytVideoId || v.yt || v.id;
     if (!videoId) {
       $('#playerFrame').src = '';
@@ -459,7 +487,9 @@
     }
     // Normalise so rail highlighting and the rest of the UI can rely on one field.
     v.ytVideoId = videoId;
-    $('#playerFrame').src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?rel=0&modestbranding=1';
+    // enablejsapi lets the page hear play / progress / end from the player.
+    $('#playerFrame').src = 'https://www.youtube-nocookie.com/embed/' + videoId +
+      '?rel=0&modestbranding=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin);
     $('#playerFrame').title = v.title + ' — ' + v.place.municipality + ', ' + v.place.stateName;
     $('#playerLoading').textContent = 'Loading video…';
     $('#playerLoading').style.opacity = '1';
@@ -468,6 +498,7 @@
     frame.onload = () => {
       frame.setAttribute('data-loaded', '1');
       $('#playerLoading').style.opacity = '0';
+      watchPlayer(v);
     };
     frame.onerror = () => {
       frame.setAttribute('data-loaded', '1');
@@ -514,6 +545,79 @@
   }
 
   /* ------------------------------------------------------------
+     Video events: video_start, video_progress (25/50/75%), video_complete.
+     Uses YouTube's player API, loaded once, in the background.
+     ------------------------------------------------------------ */
+  let ytApi = null;
+  function loadYouTubeApi() {
+    if (ytApi) return ytApi;
+    ytApi = new Promise((resolve) => {
+      if (window.YT && window.YT.Player) return resolve(window.YT);
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => { if (prev) prev(); resolve(window.YT); };
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      tag.async = true;
+      tag.onerror = () => resolve(null);
+      document.head.appendChild(tag);
+    });
+    return ytApi;
+  }
+
+  let watchToken = 0;
+  async function watchPlayer(v) {
+    const token = ++watchToken;
+    const YT = await loadYouTubeApi();
+    if (!YT || token !== watchToken) return;
+    const base = () => Object.assign(meetingParams(v), {
+      source: state.currentSource || 'homepage_player',
+      video_provider: 'youtube',
+      video_title: clip(v.title),
+      video_url: 'https://www.youtube.com/watch?v=' + v.ytVideoId
+    });
+    let started = false;
+    const hit = {};
+    let timer = null;
+    const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+    let player;
+    const checkProgress = () => {
+      if (token !== watchToken) return stop();
+      try {
+        const d = player.getDuration();
+        const t = player.getCurrentTime();
+        if (!d || d < 60) return;              // live streams report no length
+        [25, 50, 75].forEach((pct) => {
+          if (!hit[pct] && t / d >= pct / 100) {
+            hit[pct] = true;
+            track('video_progress', Object.assign(base(), { video_percent: pct }));
+          }
+        });
+      } catch (err) { stop(); }
+    };
+    try {
+      player = new YT.Player('playerFrame', {
+        events: {
+          onStateChange: (e) => {
+            if (token !== watchToken) return stop();
+            if (e.data === YT.PlayerState.PLAYING) {
+              if (!started) {
+                started = true;
+                track('video_start', Object.assign(base(), { video_percent: 0 }));
+              }
+              if (!timer) timer = setInterval(checkProgress, 5000);
+            } else if (e.data === YT.PlayerState.ENDED) {
+              stop();
+              track('video_complete', Object.assign(base(), { video_percent: 100 }));
+            } else {
+              stop();
+            }
+          }
+        }
+      });
+    } catch (err) { /* player API unavailable: page still works */ }
+  }
+
+  /* ------------------------------------------------------------
      Featured rail + upcoming schedule
      ------------------------------------------------------------ */
   async function renderRail() {
@@ -550,7 +654,7 @@
         '<div><div class="railitem__t">' + esc(v.title) + '</div>' +
         '<div class="railitem__m">' + esc(v.place.municipality) + ', ' + esc(v.place.stateCode) + ' · ' +
         (v.status === 'live' ? 'Live now' : fmtDateShort(v.publishedAt)) + '</div></div>';
-      item.addEventListener('click', () => play(v, true));
+      item.addEventListener('click', () => play(v, true, 'featured_rail'));
       panel.appendChild(item);
     });
 
@@ -568,7 +672,7 @@
           '<div class="schedrow__p">' + esc(v.place.municipality) + ', ' + esc(v.place.stateCode) +
             ' · ' + esc(v.govBody) + '</div></div>');
         row.style.cursor = 'pointer';
-        row.addEventListener('click', () => play(v, true));
+        row.addEventListener('click', () => play(v, true, 'schedule'));
         sched.appendChild(row);
       });
       $('#railNote').textContent =
@@ -646,6 +750,10 @@
         '<span class="tpill__n">' + (empty ? '0' : t.video_count) + '</span>';
       if (!empty) {
         b.addEventListener('click', () => {
+          track('topic_select', {
+            topic: clip(t.label), topic_group: isNational(t) ? 'national' : 'local',
+            action: state.query.topic === t.slug ? 'off' : 'on'
+          });
           state.query.topic = state.query.topic === t.slug ? '' : t.slug;
           state.page = 1;
           scrollToResults();
@@ -787,6 +895,21 @@
   function bind() {
     const rerender = () => { state.page = 1; flashCount = true; buildDropdowns(); renderResults(); };
 
+    // One event for every dropdown, with which one and what was picked.
+    const FILTER_NAMES = { fState: 'state', fCounty: 'county', fCity: 'city', fTier: 'community_size',
+      fBody: 'governing_body', fTopic: 'topic', fSort: 'sort', fStatus: 'status' };
+    Object.keys(FILTER_NAMES).forEach((id) => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      sel.addEventListener('change', () => {
+        const opt = sel.options[sel.selectedIndex];
+        track('filter_change', {
+          filter_name: FILTER_NAMES[id],
+          filter_value: clip(sel.value ? (opt ? opt.text : sel.value) : 'All')
+        });
+      });
+    });
+
     $('#fState').addEventListener('change', (e) => {
       state.query.state = e.target.value; state.query.county = ''; state.query.city = ''; rerender();
     });
@@ -811,23 +934,38 @@
     }
 
     let t;
+    let searchTimer;
+    let lastSearch = '';
     $('#search').addEventListener('input', (e) => {
       clearTimeout(t);
       const val = e.target.value;
       t = setTimeout(() => { state.query.q = val; state.page = 1; renderResults(); }, 220);
+      // Report the search once the person pauses typing, once per distinct term.
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        const term = val.trim().toLowerCase();
+        if (term.length >= 2 && term !== lastSearch) {
+          lastSearch = term;
+          track('search', { search_term: clip(term), results: state.total });
+        }
+      }, 1500);
     });
 
-    $('#resetBtn').addEventListener('click', resetAll);
+    $('#resetBtn').addEventListener('click', () => { track('clear_filters', { location: 'filter_bar' }); resetAll(); });
     if ($('#topicClear')) {
       $('#topicClear').addEventListener('click', () => {
         state.query.topic = ''; state.page = 1;
         scrollToResults(); renderResults(); renderTopics();
       });
     }
-    $('#moreBtn').addEventListener('click', () => { state.page += 1; renderResults(); });
+    $('#moreBtn').addEventListener('click', () => {
+      state.page += 1;
+      track('load_more', { page: state.page });
+      renderResults();
+    });
 
-    $('#tab-featured').addEventListener('click', () => switchTab('featured'));
-    $('#tab-upcoming').addEventListener('click', () => switchTab('upcoming'));
+    $('#tab-featured').addEventListener('click', () => { track('rail_tab', { tab: 'featured' }); switchTab('featured'); });
+    $('#tab-upcoming').addEventListener('click', () => { track('rail_tab', { tab: 'upcoming' }); switchTab('upcoming'); });
     document.querySelectorAll('a[href="#upcoming"]').forEach((a) =>
       a.addEventListener('click', () => switchTab('upcoming')));
 
@@ -841,6 +979,7 @@
     $('#themeBtn').addEventListener('click', () => {
       theme = theme === 'dark' ? 'light' : 'dark';
       root.setAttribute('data-theme', theme);
+      track('theme_toggle', { theme: theme });
     });
 
     const nav = $('#mainnav');
@@ -854,9 +993,16 @@
         $('#navToggle').setAttribute('aria-expanded', 'false');
       }
     });
-    // Close the mobile menu when any hash link is followed.
+    // Close the mobile menu when any hash link is followed — and record which
+    // link, and where on the page it sits (header menu, top bar, footer ...).
     document.querySelectorAll('a[href^="#"]').forEach((a) => {
       a.addEventListener('click', () => {
+        const where = a.closest('#mainnav') ? 'main_menu'
+          : a.closest('.utility') ? 'top_bar'
+          : a.closest('.footer') ? 'footer'
+          : a.closest('.masthead') ? 'logo' : 'page';
+        track('nav_click', { link_text: clip(a.textContent.trim() || a.getAttribute('aria-label'), 60),
+          link_target: a.getAttribute('href'), location: where });
         nav.classList.remove('nav--open');
         $('#navToggle').setAttribute('aria-expanded', 'false');
       });
@@ -936,7 +1082,7 @@
       }
     }
     opener = opener || state.items.find((v) => v.status === 'live') || state.items[0];
-    if (opener) play(opener, false);
+    if (opener) play(opener, false, landing.video ? 'meeting_link' : 'homepage_player');
   }
 
   /* ------------------------------------------------------------
@@ -960,7 +1106,7 @@
         const data = await res.json().catch(() => ({}));
         msg.textContent = data.message || (res.ok ? 'Thanks!' : 'Something went wrong. Please try again.');
         if (!res.ok || data.ok === false) msg.classList.add('is-err');
-        else $('#footEmail').value = '';
+        else { $('#footEmail').value = ''; track('sign_up', { method: 'newsletter', location: 'footer' }); }
       } catch (err) {
         msg.textContent = 'Could not reach the server. Please try again.';
         msg.classList.add('is-err');
