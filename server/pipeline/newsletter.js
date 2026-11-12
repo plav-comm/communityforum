@@ -51,8 +51,14 @@ function link(id, campaign) {
  * "AKRON, OH CITY COUNCIL: BUDGET & TAXES, PUBLIC SAFETY" — plus day and length.
  * Facts only: where, which body, what it was tagged with, how long.
  */
-function headline(v, campaign, { skipSlug } = {}) {
-  const topics = (v.topics || []).filter((t) => !t.fallback && t.slug !== skipSlug).map((t) => t.label);
+// Procedural tags describe how a meeting ran, not what it was about.
+const NOT_HEADLINE = new Set(['public-comment']);
+
+function headline(v, campaign, { lead } = {}) {
+  // `lead` puts one topic first (the national issue a section is about).
+  const tags = (v.topics || []).filter((t) => !t.fallback && !NOT_HEADLINE.has(t.slug));
+  tags.sort((a, b) => (b.slug === lead) - (a.slug === lead));
+  const topics = tags.map((t) => t.label);
   const what = topics.length ? ': ' + topics.slice(0, 3).join(', ') : ' MEETS';
   const text = upper(`${v.municipality}, ${v.state_code} ${v.gov_body}${what}`);
   const meta = [fmtDay(v.published_at), dur(v.duration_seconds)].filter(Boolean).join(' · ');
@@ -119,7 +125,6 @@ async function buildIssue({ now = new Date() } = {}) {
   const out = [];
   const shown = new Set();   // headline sections never repeat a meeting
 
-  out.push('# TOWN HALL MEETINGS');
   out.push(`**Every local meeting, unedited.** Week of ${fmtMonthDay(since)} – ${fmtMonthDay(now)}: ` +
     `**${plural(week.length, 'meeting')}** from ${plural(towns.size, 'community', 'communities')}.`);
   out.push('');
@@ -132,7 +137,7 @@ async function buildIssue({ now = new Date() } = {}) {
     if (!hits.length) continue;
     const fresh = hits.filter((v) => !shown.has(v.yt_video_id));
     if (!fresh.length) continue;
-    const lines = fresh.slice(0, 6).map((v) => { shown.add(v.yt_video_id); return '- ' + headline(v, campaign, { skipSlug: t.slug }); });
+    const lines = fresh.slice(0, 6).map((v) => { shown.add(v.yt_video_id); return '- ' + headline(v, campaign, { lead: t.slug }); });
     if (fresh.length > 6) lines.push(`- …and ${fresh.length - 6} more`);
     natBlocks.push({ label: t.label, n: hits.length, towns: [...new Set(hits.map((v) => v.municipality))], text: `**${upper(t.label)}**\n\n${lines.join('\n')}` });
   }
