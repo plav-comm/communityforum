@@ -44,6 +44,7 @@ async function autoAddChannel(meta) {
 async function ingestVideoIds(videoIds, { reason = 'manual' } = {}) {
   const ids = [...new Set((videoIds || []).filter(Boolean))];
   const summary = { asked: ids.length, inserted: 0, updated: 0, skipped: 0, results: [] };
+  const newPages = [];   // site paths created by this run, for IndexNow
   if (!ids.length) return summary;
 
   const metas = await youtube.getVideos(ids);
@@ -137,6 +138,11 @@ async function ingestVideoIds(videoIds, { reason = 'manual' } = {}) {
       });
 
       summary[action] += 1;
+      if (action === 'inserted') {
+        const town = `/${String(channel.state_code).toLowerCase()}/${String(channel.municipality).toLowerCase()
+          .normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`;
+        newPages.push(`/meeting/${meta.ytVideoId}`, town);
+      }
       summary.results.push({
         ytVideoId: meta.ytVideoId,
         action,
@@ -156,6 +162,11 @@ async function ingestVideoIds(videoIds, { reason = 'manual' } = {}) {
     }
   }
 
+  // Tell Bing and the other IndexNow engines about the new pages right away.
+  if (newPages.length) {
+    const base = config.websub.callbackBase;
+    require('../lib/indexnow').notify([...new Set(newPages)].map((p) => base + p)).catch(() => {});
+  }
   return summary;
 }
 
