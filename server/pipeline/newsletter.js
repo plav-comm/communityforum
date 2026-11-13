@@ -212,29 +212,67 @@ async function buildIssue({ now = new Date() } = {}) {
   return { subject: subject.slice(0, 140), body: out.join('\n'), meetings: week.length, issueKey: nyDate(now) };
 }
 
-/* ---------------- preview: tiny markdown -> HTML, enough for this format ---------------- */
-function toHtml(markdown) {
-  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const inline = (s) => esc(s)
-    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2">$1</a>')
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+/* ---------------- email HTML: the markdown above, with a light touch of the site ----------------
+   Same plain ticker, plus three things borrowed from townhallmeetings.org: the navy
+   masthead with its thin red rule, the red-dash section labels ("— BY TOPIC"), and the
+   site's blue for headline links. Inline styles only, because email clients drop <style>.
+   No blank lines anywhere, so Buttondown passes it through as one HTML block. */
+const C = {
+  navy: '#071a33', red: '#c8102e', redOnNavy: '#ff5d72', blue: '#14498f',
+  text: '#101c2e', muted: '#5b6779', faint: '#8b95a5', rule: '#d6dae2', tagline: '#9fb0c8'
+};
+const FONT = "Arial,'Helvetica Neue',Helvetica,sans-serif";
+
+function renderEmailHtml(markdown) {
+  const esc = (x) => x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const inline = (x) => esc(x)
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,
+      `<a href="$2" style="color:${C.blue};font-weight:700;text-decoration:none;">$1</a>`)
+    .replace(/\*\*([^*]+)\*\*/g, `<strong style="color:${C.text};">$1</strong>`)
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/→/g, `<span style="color:${C.red};">&rarr;</span>`)
+    .replace(/ — ([^<]*)$/, ` <span style="color:${C.muted};">— $1</span>`);   // the "— Tue 11/10 · 3h 12m" tail
+  const P = `margin:0 0 12px;font-family:${FONT};font-size:15px;line-height:1.5;color:${C.text};`;
   const html = [];
+  html.push(
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 18px;">` +
+    `<tr><td style="background:${C.navy};border-bottom:3px solid ${C.red};padding:14px 18px;">` +
+    `<div style="font-family:${FONT};font-size:18px;font-weight:800;letter-spacing:0.04em;color:#ffffff;">` +
+    `TOWN HALL <span style="color:${C.redOnNavy};">MEETINGS</span></div>` +
+    `<div style="font-family:${FONT};font-size:11px;letter-spacing:0.14em;color:${C.tagline};margin-top:3px;">` +
+    `THE WEEKLY RUNDOWN</div></td></tr></table>`);
   let inList = false;
   for (const line of markdown.split('\n')) {
-    if (/^- /.test(line)) { if (!inList) { html.push('<ul>'); inList = true; } html.push('<li>' + inline(line.slice(2)) + '</li>'); continue; }
+    if (/^- /.test(line)) {
+      if (!inList) { html.push(`<ul style="margin:0 0 14px;padding-left:18px;">`); inList = true; }
+      html.push(`<li style="margin:0 0 8px;font-family:${FONT};font-size:14px;line-height:1.45;color:${C.text};">${inline(line.slice(2))}</li>`);
+      continue;
+    }
     if (inList) { html.push('</ul>'); inList = false; }
-    if (/^# /.test(line)) html.push('<h1>' + inline(line.slice(2)) + '</h1>');
-    else if (/^### /.test(line)) html.push('<h3>' + inline(line.slice(4)) + '</h3>');
-    else if (/^---$/.test(line)) html.push('<hr>');
-    else if (line.trim()) html.push('<p>' + inline(line) + '</p>');
+    if (/^### /.test(line)) {
+      const label = line.slice(4).replace(/^▶\s*/, '');
+      html.push(`<p style="margin:22px 0 10px;font-family:${FONT};font-size:12px;font-weight:700;letter-spacing:0.12em;color:${C.blue};">` +
+        `<span style="color:${C.red};">&mdash;</span>&nbsp; ${esc(label)}</p>`);
+    } else if (/^---$/.test(line)) {
+      html.push(`<hr style="border:0;border-top:1px solid ${C.rule};margin:18px 0 0;">`);
+    } else if (/^\*\*[^*\[]+\*\*$/.test(line.trim())) {
+      // a sub-head on its own line, e.g. **DATA CENTERS**
+      html.push(`<p style="margin:12px 0 6px;font-family:${FONT};font-size:13px;font-weight:800;letter-spacing:0.04em;color:${C.text};">${esc(line.trim().slice(2, -2))}</p>`);
+    } else if (/^\*[^*].*\*$/.test(line.trim())) {
+      html.push(`<p style="margin:16px 0 0;font-family:${FONT};font-size:12px;line-height:1.5;color:${C.faint};">${esc(line.trim().slice(1, -1))}</p>`);
+    } else if (line.trim()) {
+      html.push(`<p style="${P}">${inline(line)}</p>`);
+    }
   }
   if (inList) html.push('</ul>');
+  return `<div style="max-width:640px;">${html.join('')}</div>`;
+}
+
+/** A browser page around the email, for the admin preview button. */
+function toHtml(markdown) {
   return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
-    '<title>Newsletter preview</title><style>body{font:16px/1.5 Georgia,serif;max-width:680px;margin:24px auto;padding:0 16px;color:#111;background:#fff}' +
-    'h1{font:900 30px/1.1 Arial,sans-serif;letter-spacing:.02em}h3{font:800 15px Arial,sans-serif;letter-spacing:.06em;color:#b00}' +
-    'a{color:#000;font-weight:700}ul{padding-left:18px}li{margin:6px 0}hr{border:0;border-top:1px solid #ccc;margin:20px 0}</style></head><body>' +
-    html.join('\n') + '</body></html>';
+    '<title>Newsletter preview</title></head><body style="margin:24px auto;max-width:680px;padding:0 16px;background:#ffffff;">' +
+    renderEmailHtml(markdown) + '</body></html>';
 }
 
 /* ---------------- drafting ---------------- */
@@ -246,7 +284,7 @@ async function createDraft({ now = new Date(), force = false } = {}) {
     if (exists) return { skipped: true, why: 'already drafted ' + issue.issueKey };
   }
   try {
-    const email = await buttondown.createDraft({ subject: issue.subject, body: issue.body });
+    const email = await buttondown.createDraft({ subject: issue.subject, body: renderEmailHtml(issue.body) });
     await query(
       `INSERT INTO newsletter_issues (issue_key, subject, meetings, buttondown_id, status)
        VALUES ($1,$2,$3,$4,'draft')
@@ -272,4 +310,4 @@ async function maybeDraftWeekly({ now = new Date() } = {}) {
   return createDraft({ now });
 }
 
-module.exports = { buildIssue, toHtml, createDraft, maybeDraftWeekly, parseTown, headline };
+module.exports = { buildIssue, toHtml, renderEmailHtml, createDraft, maybeDraftWeekly, parseTown, headline };
