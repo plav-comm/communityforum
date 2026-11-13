@@ -70,6 +70,7 @@ app.use(express.static(path.join(__dirname, '..', 'public'), {
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 
 /* ---------------- search-engine pages (sitemap, robots, town & meeting pages) ---------------- */
+app.use(require('./routes/pages'));   // /about, /towns, /llms.txt, IndexNow key
 app.use(require('./routes/seo'));
 
 /* ---------------- errors ---------------- */
