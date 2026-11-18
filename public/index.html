@@ -130,6 +130,24 @@
     </div>
   </section>
 
+  <!-- ============ NEWSLETTER BAND ============ -->
+  <section class="signupband" id="signupBand" aria-label="Weekly newsletter">
+    <div class="wrap signupband__inner">
+      <div class="signupband__copy">
+        <div class="signupband__eyebrow">The Weekly Rundown</div>
+        <p class="signupband__text">Every Monday: the week's council, county and school board meetings in plain headlines,
+          from data centers and Flock cameras to zoning and budgets. Free, no commentary.</p>
+      </div>
+      <form class="signupband__form" id="bandSignup" novalidate>
+        <label class="sr-only" for="bandEmail">Email address</label>
+        <input type="email" id="bandEmail" name="email" placeholder="you@example.com" autocomplete="email" required />
+        <input type="text" name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true" />
+        <button type="submit">Get the rundown</button>
+        <p class="signupband__msg" id="bandSignupMsg" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+
   <!-- ============ THE LIBRARY: topics + filters + results, one block ============ -->
   <section class="section library" id="library">
     <div class="wrap">
