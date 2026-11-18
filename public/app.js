@@ -1088,25 +1088,32 @@
   /* ------------------------------------------------------------
      Newsletter signup (footer)
      ------------------------------------------------------------ */
-  const signup = $('#footSignup');
-  if (signup) {
-    signup.addEventListener('submit', async (e) => {
+  // Two forms share one handler: the band under the player and the footer line.
+  const SUBSCRIBED_KEY = 'thm_subscribed';
+  function bindSignup(formSel, emailSel, msgSel, msgClass, location) {
+    const form = $(formSel);
+    if (!form) return;
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const msg = $('#footSignupMsg');
-      const btn = signup.querySelector('button');
+      const msg = $(msgSel);
+      const btn = form.querySelector('button');
       btn.disabled = true;
-      msg.className = 'footer__signupmsg';
+      msg.className = msgClass;
       msg.textContent = 'Signing you up…';
       try {
         const res = await fetch(api('/api/subscribe'), {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ email: $('#footEmail').value, website: signup.website.value })
+          body: JSON.stringify({ email: $(emailSel).value, website: form.website.value })
         });
         const data = await res.json().catch(() => ({}));
         msg.textContent = data.message || (res.ok ? 'Thanks!' : 'Something went wrong. Please try again.');
         if (!res.ok || data.ok === false) msg.classList.add('is-err');
-        else { $('#footEmail').value = ''; track('sign_up', { method: 'newsletter', location: 'footer' }); }
+        else {
+          $(emailSel).value = '';
+          track('sign_up', { method: 'newsletter', location: location });
+          try { localStorage.setItem(SUBSCRIBED_KEY, '1'); } catch (err) { /* private mode */ }
+        }
       } catch (err) {
         msg.textContent = 'Could not reach the server. Please try again.';
         msg.classList.add('is-err');
@@ -1115,6 +1122,10 @@
       }
     });
   }
+  bindSignup('#bandSignup', '#bandEmail', '#bandSignupMsg', 'signupband__msg', 'top_band');
+  bindSignup('#footSignup', '#footEmail', '#footSignupMsg', 'footer__signupmsg', 'footer');
+  // Someone who already signed up on this browser doesn't need the band again.
+  try { if (localStorage.getItem(SUBSCRIBED_KEY) && $('#signupBand')) $('#signupBand').hidden = true; } catch (err) { /* ignore */ }
 
   boot();
 })();
