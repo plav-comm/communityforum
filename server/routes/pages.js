@@ -19,6 +19,7 @@ const indexnow = require('../lib/indexnow');
 const router = express.Router();
 const BASE = config.websub.callbackBase || 'https://townhallmeetings.org';
 const CONTACT = 'news@townhallmeetings.org';
+const ADS = 'matt@townhallmeetings.org';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -84,6 +85,18 @@ ${ld ? `<script type="application/ld+json">${ldJson(ld)}</script>` : ''}
   .policy .towns-list { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); padding: 0; list-style: none; }
   .towns-list li { margin: 0; }
   .towns-n { color: var(--text-faint); font-size: var(--text-sm); }
+  .addr { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); padding: var(--space-4) var(--space-5);
+    background: var(--primary-soft); border-radius: 8px; margin: var(--space-4) 0 var(--space-6); }
+  .addr__email { font-family: var(--font-display); font-weight: 700; font-size: var(--text-lg); color: var(--text);
+    user-select: all; overflow-wrap: anywhere; }
+  .addr__btns { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+  .addr__btn { padding: 8px 14px; border-radius: 6px; border: 1px solid var(--primary); background: var(--surface);
+    color: var(--primary); font: inherit; font-weight: 700; cursor: pointer; text-decoration: none !important; }
+  .addr__btn--solid { background: var(--live); border-color: var(--live); color: #fff !important; }
+  .policy .stats-row { display: flex; flex-wrap: wrap; gap: var(--space-6); margin: var(--space-4) 0 var(--space-2); padding: 0; list-style: none; }
+  .stats-row li { margin: 0; }
+  .stats-row b { display: block; font-family: var(--font-display); font-size: var(--text-xl); color: var(--primary); }
+  .stats-row span { font-size: var(--text-sm); color: var(--text-muted); }
 </style>
 </head>
 <body>
@@ -94,8 +107,18 @@ ${ld ? `<script type="application/ld+json">${ldJson(ld)}</script>` : ''}
 </header>
 <main class="policy">
 ${body}
-  <p><a href="/">&larr; Back to Town Hall Meetings</a> · <a href="/about">About &amp; FAQ</a> · <a href="/towns">All towns</a> · <a href="/privacy.html">Privacy Policy</a></p>
+  <p><a href="/">&larr; Back to Town Hall Meetings</a> · <a href="/about">About &amp; FAQ</a> · <a href="/towns">All towns</a> · <a href="/advertise">Advertise</a> · <a href="/contact">Contact</a> · <a href="/privacy.html">Privacy Policy</a></p>
 </main>
+<script>
+  // Copy buttons: show the address works even when the visitor has no email app.
+  document.querySelectorAll('[data-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var text = b.getAttribute('data-copy'), done = function () { var t = b.textContent; b.textContent = 'Copied'; setTimeout(function () { b.textContent = t; }, 1600); };
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+      try { if (window.gtag) window.gtag('event', 'copy_email', { email_type: b.getAttribute('data-kind') || '' }); } catch (e) {}
+    });
+  });
+</script>
 </body>
 </html>`;
 }
@@ -168,6 +191,68 @@ router.get('/about', async (req, res, next) => {
       canonical: '/about', body, ld
     }));
   } catch (err) { next(err); }
+});
+
+/** The address card: shown as text, with Copy and Email buttons. */
+function addressCard(email, subject, kind) {
+  const href = `mailto:${email}${subject ? '?subject=' + encodeURIComponent(subject) : ''}`;
+  return `<div class="addr"><span class="addr__email">${esc(email)}</span>
+    <span class="addr__btns"><button type="button" class="addr__btn" data-copy="${esc(email)}" data-kind="${kind}">Copy address</button>
+    <a class="addr__btn addr__btn--solid" href="${esc(href)}">Open in my email</a></span></div>`;
+}
+
+/* ---------------- Advertise ---------------- */
+router.get('/advertise', async (req, res, next) => {
+  try {
+    const c = await coverage();
+    const body = `
+  <h1>Advertise with Town Hall Meetings</h1>
+  <p class="lede">Reach the people who follow local government: residents, community groups, local press and the
+  officials themselves, in the towns and counties you care about.</p>
+  <ul class="stats-row">
+    <li><b>${num(c.meetings)}</b><span>meetings archived</span></li>
+    <li><b>${num(c.communities)}</b><span>communities</span></li>
+    <li><b>${num(c.states)}</b><span>states</span></li>
+  </ul>
+  <h2>Ways to work with us</h2>
+  <ul>
+    <li><strong>Newsletter sponsorship.</strong> One clearly labeled sponsor line in The Weekly Rundown, the Monday email of the week's meetings.</li>
+    <li><strong>Local sponsorship.</strong> A clearly labeled sponsor message on a town, county or state page.</li>
+    <li><strong>Something else.</strong> Tell us what you have in mind.</li>
+  </ul>
+  <p>Sponsors never influence which meetings appear or how they are labeled. Every recording stays complete and unedited.</p>
+  <h2>Get in touch</h2>
+  <p>Email us with the area you want to reach and what you'd like to promote. We'll get back to you.</p>
+  ${addressCard(ADS, 'Advertising on Town Hall Meetings', 'advertise')}
+`;
+    res.set('cache-control', 'public, max-age=900');
+    res.type('html').send(page({
+      title: 'Advertise — Town Hall Meetings',
+      description: 'Sponsor The Weekly Rundown newsletter or a town, county or state page on Town Hall Meetings.',
+      canonical: '/advertise', body
+    }));
+  } catch (err) { next(err); }
+});
+
+/* ---------------- Contact ---------------- */
+router.get('/contact', (req, res) => {
+  const body = `
+  <h1>Contact</h1>
+  <p class="lede">Questions, corrections, a town to add, or a meeting that shouldn't be here: one address reaches us.</p>
+  ${addressCard(CONTACT, 'Town Hall Meetings', 'contact')}
+  <h2>Helpful to include</h2>
+  <ul>
+    <li><strong>Adding a town:</strong> the link to its official YouTube channel, or wherever its meetings are posted.</li>
+    <li><strong>A correction or takedown:</strong> the link to the meeting page on this site and what needs to change.</li>
+    <li><strong>Advertising:</strong> see <a href="/advertise">Advertise</a>.</li>
+  </ul>
+`;
+  res.set('cache-control', 'public, max-age=3600');
+  res.type('html').send(page({
+    title: 'Contact — Town Hall Meetings',
+    description: 'How to reach Town Hall Meetings: add a town, report a correction, or ask a question.',
+    canonical: '/contact', body
+  }));
 });
 
 /* ---------------- All towns ---------------- */
